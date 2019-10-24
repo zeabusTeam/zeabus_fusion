@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
 
-    <name>zeabus_fusion</name>
+    <name>zeabus_localize</name>
     <version>0.0.0</version>
     <description>This package purpose to fusion sensor to get new or better data</description>
 

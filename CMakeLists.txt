@@ -1,4 +1,4 @@
 cmake_minimum_required( VERSION 2.8.3 )
-project( zeabus_fusion )
+project( zeabus_localize )
 
 find_package( catkin REQUIRED COMPONENTS )
