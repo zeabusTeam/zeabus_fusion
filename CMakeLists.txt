@@ -14,8 +14,19 @@ find_package( zeabus_library REQUIRED COMPONENTS )
 include_directories(
     ${catkin_INCLUDE_DIRS}
     ${zeabus_library_INCLUDE_DIRS}
+    "${PROJECT_SOURCE_DIR}/include"
 )
 
 catkin_package(
     CATKIN_DEPENDS roscpp
+)
+
+add_executable( localize 
+    src/localize.cpp # Main file
+    src/calculate_angular_velocity.cpp # File algorithm sequence calculate angular velocity
+)
+add_dependencies( localize ${catkin_EXPORTED_TARGETS} )
+target_link_libraries( localize
+    ${zeabus_library_LIBRARIES}
+    ${catkin_LIBRARIES}
 )
