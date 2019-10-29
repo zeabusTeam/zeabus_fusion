@@ -21,15 +21,21 @@
 
 #include    <nav_msgs/Odometry.h>
 
+#include    <geometry_msgs/Vector3.h>
+
 #include    <zeabus_utility/HeaderFloat64.h>
 
 #include    <zeabus/ros/node.hpp>
+
+#include    <zeabus/ros/convert/geometry_quaternion.hpp>
 
 #include    <zeabus/ros/subscriber/base_class.hpp>
 
 #include    <tf/LinearMath/Quaternion.h>
 
 #include    <tf/transform_broadcaster.h>
+
+#include    <tf/transform_listener.h>
 
 #include    <calculate_angular_velocity.hpp>
 
@@ -59,6 +65,7 @@ int main( int argv , char** argc )
     ph.param< std::string >( "topic_pressure", 
             topic_pressure,
             "sensor/pressure" );
+
     // Part setup for listen message form imu
     std::mutex lock_sensor_imu;
     sensor_msgs::Imu message_sensor_imu;
@@ -88,6 +95,43 @@ int main( int argv , char** argc )
     // set constant value
     message_localize_state.header.frame_id = "odom";
     message_localize_state.child_frame_id = "base_link";
+    // Next step prepare about tramslation sensor handle
+    static tf::TransformListener listener;
+    tf::StampedTransform temp_transform;
+    tf::Quaternion translation_pressure;
+    tf::Quaternion rotation_imu;
+    tf::Quaternion current_orientation;
+    tf::Quaternion origin_orientation;
+    try{
+        // Part of pressure sensor
+        listener.lookupTransform( "base_link" , "sensor_pressure" , ros::Time(0) , temp_transform );
+        translation_pressure = tf::Quaternion( temp_transform.getOrigin().x(), 
+                temp_transform.getOrigin().y(), 
+                temp_transform.getOrigin().z(), 
+                0 );
+        // Part of imu sensor
+        listener.lookupTransform( "base_link" , "sensor_imu_NED" , ros::Time(0) , temp_transform );
+        rotation_imu = temp_transform.getRotation();
+
+        geometry_msgs::Vector3 temp_vector3;
+        tf::Matrix3x3( rotation_imu ).getRPY( temp_vector3.x , temp_vector3.y , temp_vector3.z );
+        printf( "---------------------- TRANSLATION OF LOCALIZE --------------------------\n");
+        printf( "rotation for IMU (YPR): %6.2f%6.3f%6.2f", 
+                temp_vector3.z, 
+                temp_vector3.y , 
+                temp_vector3.x );
+        printf( "translation for depth : %6.2f%6.2f%6.2f",
+                translation_pressure.x(),
+                translation_pressure.y(),
+                translation_pressure.z() );
+
+    }
+    catch( tf::TransformException ex )
+    {
+        ROS_ERROR( "%s" , ex.what() );
+        goto exit_main;
+    }
+
     while( ros::ok() )
     {
         // load message sensor imu
@@ -102,11 +146,22 @@ int main( int argv , char** argc )
 
         message_localize_state.pose.pose.position.z = load_sensor_pressure.data;
 
+        zeabus_ros::convert::geometry_quaternion::tf( &load_sensor_imu.orientation, 
+                &origin_orientation );
+        current_orientation = rotation_imu * origin_orientation * rotation_imu.inverse();
+
         // calculate velocity of robot
-        calculate_angular_velocity( &load_sensor_imu , &message_localize_state.twist.twist.angular );
+        calculate_angular_velocity( &current_orientation, 
+                &message_localize_state.twist.twist.angular,
+                load_sensor_imu.header.stamp );
         // Get orientation of robot
         message_localize_state.pose.pose.orientation = load_sensor_imu.orientation;
         message_localize_state.header.stamp = ros::Time::now();
+
+        // Rotation value of pressure sensor
+        message_localize_state.pose.pose.position.z = load_sensor_pressure.data +
+                ( current_orientation * translation_pressure * current_orientation.inverse() ).z();
+                 
         // Set variable transform 
         transform_localize_state.setOrigin( tf::Vector3( 
                 message_localize_state.pose.pose.position.x,
@@ -123,5 +178,8 @@ int main( int argv , char** argc )
                 message_localize_state.child_frame_id ) );
         rate.sleep();
     } // main loop    
+
+exit_main:
+    ros::shutdown();
     
 }

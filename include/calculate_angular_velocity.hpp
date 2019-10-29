@@ -27,3 +27,7 @@
 //  velocity in angular term
 void calculate_angular_velocity( sensor_msgs::Imu* ptr_input , 
         geometry_msgs::Vector3* ptr_output ); 
+
+void calculate_angular_velocity( tf::Quaternion* ptr_input , 
+        geometry_msgs::Vector3* ptr_output,
+        ros::Time time_stamp ); 
