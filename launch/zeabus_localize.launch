@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <include file="$(find zeabus_model)/launch/zeabus_model.launch"/>
+
+    <node pkg="zeabus_localize" type="localize" name="localize" output="screen"/>
+
+</launch>

@@ -4,12 +4,14 @@
 // MAINTAINER	: K.Supasan
 
 // MACRO DETAIL
+// _ROTATION_IMU_SYSTEM_    : If define this mean you want to conversation between ENU<-->NED
 
 // README
 
 // REFERENCE
 
 // MACRO SET
+#define _ROTATION_IMU_SYSTEM_
 
 // MACRO CONDITION
 
@@ -100,38 +102,51 @@ int main( int argv , char** argc )
     tf::StampedTransform temp_transform;
     tf::Quaternion translation_pressure;
     tf::Quaternion rotation_imu;
-    tf::Quaternion current_orientation;
-    tf::Quaternion origin_orientation;
-    try{
-        // Part of pressure sensor
-        listener.lookupTransform( "base_link" , "sensor_pressure" , ros::Time(0) , temp_transform );
-        translation_pressure = tf::Quaternion( temp_transform.getOrigin().x(), 
-                temp_transform.getOrigin().y(), 
-                temp_transform.getOrigin().z(), 
-                0 );
-        // Part of imu sensor
-        listener.lookupTransform( "base_link" , "sensor_imu_NED" , ros::Time(0) , temp_transform );
-        rotation_imu = temp_transform.getRotation();
-
-        geometry_msgs::Vector3 temp_vector3;
-        tf::Matrix3x3( rotation_imu ).getRPY( temp_vector3.x , temp_vector3.y , temp_vector3.z );
-        printf( "---------------------- TRANSLATION OF LOCALIZE --------------------------\n");
-        printf( "rotation for IMU (YPR): %6.2f%6.3f%6.2f", 
-                temp_vector3.z, 
-                temp_vector3.y , 
-                temp_vector3.x );
-        printf( "translation for depth : %6.2f%6.2f%6.2f",
-                translation_pressure.x(),
-                translation_pressure.y(),
-                translation_pressure.z() );
-
-    }
-    catch( tf::TransformException ex )
+    tf::Quaternion current_orientation( 0 , 0 , 0 , 1);
+    tf::Quaternion origin_orientation ( 0 , 0 , 0 , 1);
+#ifdef _ROTATION_IMU_SYSTEM_
+    const static tf::Quaternion conversation_coordinate( 0.707 , 0.707 , 0 , 0 );
+#endif // #ifdef _ROTATION_IMU_SYSTEM_
+    while( ros::ok() )
     {
-        ROS_ERROR( "%s" , ex.what() );
-        goto exit_main;
+        try{
+            // Part of pressure sensor
+            listener.lookupTransform( "base_link", 
+                    "sensor_pressure", 
+                    ros::Time(0), 
+                    temp_transform );
+            translation_pressure = tf::Quaternion( temp_transform.getOrigin().x(), 
+                    temp_transform.getOrigin().y(), 
+                    temp_transform.getOrigin().z(), 
+                    0 );
+            // Part of imu sensor
+            listener.lookupTransform( "base_link"
+                    , "sensor_imu" 
+                    , ros::Time(0) 
+                    , temp_transform );
+            rotation_imu = temp_transform.getRotation();
+
+            geometry_msgs::Vector3 temp_vector3;
+            tf::Matrix3x3( rotation_imu ).getRPY( temp_vector3.x , temp_vector3.y , temp_vector3.z );
+            printf( "---------------------- TRANSLATION OF LOCALIZE --------------------------\n");
+            printf( "rotation for IMU (YPR): %8.2f%8.3f%8.2f\n", 
+                    temp_vector3.z, 
+                    temp_vector3.y , 
+                    temp_vector3.x );
+            printf( "translation for depth : %8.2f%8.2f%8.2f\n",
+                    translation_pressure.x(),
+                    translation_pressure.y(),
+                    translation_pressure.z() );
+            goto active_main;
+        }
+        catch( tf::TransformException ex )
+        {
+            ROS_ERROR( "%s" , ex.what() );
+            ros::Duration( 1.0 ).sleep();
+        }
     }
 
+active_main:
     while( ros::ok() )
     {
         // load message sensor imu
@@ -148,14 +163,24 @@ int main( int argv , char** argc )
 
         zeabus_ros::convert::geometry_quaternion::tf( &load_sensor_imu.orientation, 
                 &origin_orientation );
-        current_orientation = rotation_imu * origin_orientation * rotation_imu.inverse();
+#ifdef _ROTATION_IMU_SYSTEM_
+        origin_orientation = conversation_coordinate.inverse() * 
+                origin_orientation * 
+                conversation_coordinate;
+#endif
+        current_orientation = rotation_imu * origin_orientation;
+        current_orientation = tf::Quaternion( -1.0*current_orientation.x() ,
+                -1.0*current_orientation.y(),
+                current_orientation.z(),
+                current_orientation.w() );
 
         // calculate velocity of robot
         calculate_angular_velocity( &current_orientation, 
                 &message_localize_state.twist.twist.angular,
                 load_sensor_imu.header.stamp );
         // Get orientation of robot
-        message_localize_state.pose.pose.orientation = load_sensor_imu.orientation;
+        zeabus_ros::convert::geometry_quaternion::tf( &current_orientation, 
+                &message_localize_state.pose.pose.orientation ) ;
         message_localize_state.header.stamp = ros::Time::now();
 
         // Rotation value of pressure sensor
@@ -176,6 +201,8 @@ int main( int argv , char** argc )
                 message_localize_state.header.stamp,
                 message_localize_state.header.frame_id,
                 message_localize_state.child_frame_id ) );
+
+        publisher_localize.publish( message_localize_state );
         rate.sleep();
     } // main loop    
 

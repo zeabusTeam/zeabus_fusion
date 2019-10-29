@@ -30,3 +30,10 @@ target_link_libraries( localize
     ${zeabus_library_LIBRARIES}
     ${catkin_LIBRARIES}
 )
+
+add_executable( quaternion
+    src/know_quaternion.cpp
+)
+target_link_libraries( quaternion
+    ${zeabus_library_LIBRARIES}
+)
