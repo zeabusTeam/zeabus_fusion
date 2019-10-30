@@ -23,6 +23,8 @@
 
 #include    <nav_msgs/Odometry.h>
 
+#include    <geometry_msgs/Pose.h>
+
 #include    <geometry_msgs/Vector3.h>
 
 #include    <zeabus_utility/HeaderFloat64.h>
@@ -38,6 +40,8 @@
 #include    <tf/transform_broadcaster.h>
 
 #include    <tf/transform_listener.h>
+
+#include    <target_service.hpp>
 
 #include    <calculate_angular_velocity.hpp>
 
@@ -87,8 +91,27 @@ int main( int argv , char** argc )
     // Part setup publisher message for localize
     ros::Publisher publisher_localize = nh.advertise< nav_msgs::Odometry >( topic_output , 1 );
 
+    // Part about set target state
+    std::mutex lock_target_state;
+    geometry_msgs::Pose message_target_state;
+    tf::Transform transform_target_state;
+    message_target_state.position.x = 0;
+    message_target_state.position.y = 0;
+    message_target_state.position.z = 0;
+    message_target_state.orientation.x = 0;
+    message_target_state.orientation.y = 0;
+    message_target_state.orientation.z = 0;
+    message_target_state.orientation.w = 1;
+    bool update_target_state = true;
+    // Part manage all service for ros to set target state
+    TargetService target_service( &nh );
+    target_service.setup_all_variable( &update_target_state,
+        &message_target_state,
+        &lock_target_state );
+    target_service.setup_all_service();
     // Part setup message for use in main loop
     nav_msgs::Odometry message_localize_state;
+    message_localize_state.pose.pose.orientation.w = 1;
     zeabus_utility::HeaderFloat64 load_sensor_pressure;
     sensor_msgs::Imu load_sensor_imu;
     ros::Rate rate( frequency );
@@ -149,6 +172,21 @@ int main( int argv , char** argc )
 active_main:
     while( ros::ok() )
     {
+        // Critical section to access about target state of robot
+        lock_target_state.lock();
+        if( update_target_state )
+        {
+            transform_target_state.setOrigin( tf::Vector3( message_target_state.position.x,
+                    message_target_state.position.y,
+                    message_target_state.position.z ) );
+            transform_target_state.setRotation( tf::Quaternion( 
+                    message_target_state.orientation.x,
+                    message_target_state.orientation.y,
+                    message_target_state.orientation.z,
+                    message_target_state.orientation.w ) );
+            update_target_state = false;
+        }
+        lock_target_state.unlock();
         // load message sensor imu
         lock_sensor_imu.lock();
         load_sensor_imu = message_sensor_imu;
@@ -201,6 +239,10 @@ active_main:
                 message_localize_state.header.stamp,
                 message_localize_state.header.frame_id,
                 message_localize_state.child_frame_id ) );
+        broadcaster.sendTransform( tf::StampedTransform( transform_target_state,
+                message_localize_state.header.stamp,
+                message_localize_state.header.frame_id,
+                message_localize_state.child_frame_id + "_target" ) );
 
         publisher_localize.publish( message_localize_state );
         rate.sleep();
