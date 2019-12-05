@@ -75,6 +75,10 @@ int main( int argv , char** argc )
     // Part setup for listen message form imu
     std::mutex lock_sensor_imu;
     sensor_msgs::Imu message_sensor_imu;
+    message_sensor_imu.orientation.x = 0;
+    message_sensor_imu.orientation.y = 0;
+    message_sensor_imu.orientation.z = 0;
+    message_sensor_imu.orientation.w = 1;
     zeabus_ros::subscriber::BaseClass< sensor_msgs::Imu > listener_sensor_imu( &nh, 
             &message_sensor_imu );
     listener_sensor_imu.setup_mutex_data( &lock_sensor_imu );

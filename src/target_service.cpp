@@ -6,8 +6,10 @@
 // MACRO DETAIL
 
 // README
+//  Relative callback will relative with target message 
 
 // REFERENCE
+// ref01 : http://docs.ros.org/melodic/api/tf/html/c++/Quaternion_8h_source.html#l00076
 
 // MACRO SET
 
@@ -33,17 +35,80 @@ void TargetService::setup_all_variable( bool* ptr_update_target_state,
 
 void TargetService::setup_all_service()
 {
+
     this->service_absolute_depth = this->ptr_node_handle->advertiseService( "/target/absolute_depth"
             , &TargetService::callback_absolute_depth , this );
+    this->service_relative_yaw = this->ptr_node_handle->advertiseService( "/target/relative_yaw"
+            , &TargetService::callback_relative_yaw , this );
+    this->service_relative_roll = this->ptr_node_handle->advertiseService( "/target/relative_roll"
+            , &TargetService::callback_relative_roll , this );
+    this->service_relative_pitch = this->ptr_node_handle->advertiseService( "/target/relative_pitch"
+            , &TargetService::callback_relative_pitch , this );
 }
 
 bool TargetService::callback_absolute_depth( zeabus_utility::SendFloat::Request& request,
         zeabus_utility::SendFloat::Response& response )
 {
-    this->ptr_lock->lock();
+    this->ptr_lock->lock(); // acquire lock
     this->ptr_message_target_state->position.z = request.data;
-    *(this->ptr_updated_target_state) = true;
-    this->ptr_lock->unlock();
+    this->updated_target_state();
+    this->ptr_lock->unlock(); // release lock
+    return true;
 }
 
+bool TargetService::callback_relative_yaw( zeabus_utility::SendFloat::Request& request,
+        zeabus_utility::SendFloat::Response& response )
+{
+    tf::Quaternion relative_quaternion;
+    tf::Quaternion current_quaternion; 
+    zeabus_ros::convert::geometry_quaternion::tf( &(this->ptr_message_target_state->orientation) ,
+            &current_quaternion );
+    relative_quaternion.setRPY( 0 , 0 , request.data );
+    current_quaternion = relative_quaternion * current_quaternion;
+    this->ptr_lock->lock(); // acquire lock
+    zeabus_ros::convert::geometry_quaternion::tf( &current_quaternion , 
+            &( this->ptr_message_target_state->orientation ) );
+    this->updated_target_state();
+    this->ptr_lock->unlock(); // release lock
+    return true;
+}
+
+bool TargetService::callback_relative_roll( zeabus_utility::SendFloat::Request& request,
+        zeabus_utility::SendFloat::Response& response )
+{
+    tf::Quaternion relative_quaternion;
+    tf::Quaternion current_quaternion; 
+    zeabus_ros::convert::geometry_quaternion::tf( &(this->ptr_message_target_state->orientation) ,
+            &current_quaternion );
+    relative_quaternion.setRPY( request.data , 0 , 0 );
+    current_quaternion = relative_quaternion * current_quaternion;
+    this->ptr_lock->lock(); // acquire lock
+    zeabus_ros::convert::geometry_quaternion::tf( &current_quaternion , 
+            &( this->ptr_message_target_state->orientation ) );
+    this->updated_target_state();
+    this->ptr_lock->unlock(); // release lock
+    return true;
+}
+
+bool TargetService::callback_relative_pitch( zeabus_utility::SendFloat::Request& request,
+        zeabus_utility::SendFloat::Response& response )
+{
+    tf::Quaternion relative_quaternion;
+    tf::Quaternion current_quaternion; 
+    zeabus_ros::convert::geometry_quaternion::tf( &(this->ptr_message_target_state->orientation) ,
+            &current_quaternion );
+    relative_quaternion.setRPY( 0 , request.data , 0 );
+    current_quaternion = relative_quaternion * current_quaternion;
+    this->ptr_lock->lock(); // acquire lock
+    zeabus_ros::convert::geometry_quaternion::tf( &current_quaternion , 
+            &( this->ptr_message_target_state->orientation ) );
+    this->updated_target_state();
+    this->ptr_lock->unlock(); // release lock
+    return true;
+}
+
+void TargetService::updated_target_state()
+{
+    *(this->ptr_updated_target_state) = true;
+}
 #endif
