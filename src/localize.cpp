@@ -52,6 +52,9 @@ int main( int argv , char** argc )
     ros::NodeHandle ph("~"); // for param node handle
     ros::NodeHandle nh(""); // general node handle
 
+    const static unit_acceleration_imu = 9.80665;
+    const static gravity_acceleration = 9.6431658; // collecting from stable imu 
+
     node.spin();
     // This frequency is tell you about frequency to calculate new state of robot
     int frequency;
