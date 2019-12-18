@@ -204,6 +204,10 @@ active_main:
         load_sensor_pressure = message_sensor_pressure;
         lock_sensor_pressure.unlock();
 
+        message_localize_state.twist.twist.linear.z = ( load_sensor_pressure.data - 
+                message_localize_state.pose.pose.position.z ) * 60 / 
+                ( load_sensor_pressure.header.stamp - message_localize_state.header.stamp ).toSec();  
+
         message_localize_state.pose.pose.position.z = load_sensor_pressure.data;
 
         zeabus_ros::convert::geometry_quaternion::tf( &load_sensor_imu.orientation, 

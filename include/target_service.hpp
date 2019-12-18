@@ -21,6 +21,8 @@
 
 #include    <geometry_msgs/Pose.h>
 
+#include    <geometry_msgs/Vector3.h>
+
 #include    <tf/LinearMath/Matrix3x3.h>
 
 #include    <tf/LinearMath/Quaternion.h> 
@@ -59,6 +61,18 @@ class TargetService
 
         ros::ServiceServer service_relative_pitch;
         bool callback_relative_pitch( zeabus_utility::SendFloat::Request& request,
+                zeabus_utility::SendFloat::Response& response );
+
+        ros::ServiceServer service_absolute_yaw;
+        bool callback_absolute_yaw( zeabus_utility::SendFloat::Request& request,
+                zeabus_utility::SendFloat::Response& response );
+
+        ros::ServiceServer service_absolute_roll;
+        bool callback_absolute_roll( zeabus_utility::SendFloat::Request& request,
+                zeabus_utility::SendFloat::Response& response );
+
+        ros::ServiceServer service_absolute_pitch;
+        bool callback_absolute_pitch( zeabus_utility::SendFloat::Request& request,
                 zeabus_utility::SendFloat::Response& response );
 
     protected:
