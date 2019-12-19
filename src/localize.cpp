@@ -52,9 +52,6 @@ int main( int argv , char** argc )
     ros::NodeHandle ph("~"); // for param node handle
     ros::NodeHandle nh(""); // general node handle
 
-    const static unit_acceleration_imu = 9.80665;
-    const static gravity_acceleration = 9.6431658; // collecting from stable imu 
-
     node.spin();
     // This frequency is tell you about frequency to calculate new state of robot
     int frequency;
@@ -204,10 +201,6 @@ active_main:
         load_sensor_pressure = message_sensor_pressure;
         lock_sensor_pressure.unlock();
 
-        message_localize_state.twist.twist.linear.z = ( load_sensor_pressure.data - 
-                message_localize_state.pose.pose.position.z ) * 60 / 
-                ( load_sensor_pressure.header.stamp - message_localize_state.header.stamp ).toSec();  
-
         message_localize_state.pose.pose.position.z = load_sensor_pressure.data;
 
         zeabus_ros::convert::geometry_quaternion::tf( &load_sensor_imu.orientation, 
@@ -231,11 +224,16 @@ active_main:
         zeabus_ros::convert::geometry_quaternion::tf( &current_orientation, 
                 &message_localize_state.pose.pose.orientation ) ;
         message_localize_state.header.stamp = ros::Time::now();
-
-        // Rotation value of pressure sensor
-        message_localize_state.pose.pose.position.z = load_sensor_pressure.data +
+        // Rotation value of pressure sensor 
+        // Pressure sensor is base_link convert to odom frame
+        double previous_data = message_localize_state.pose.pose.position.z;
+        message_localize_state.pose.pose.position.z = load_sensor_pressure.data -
                 ( current_orientation * translation_pressure * current_orientation.inverse() ).z();
                  
+        message_localize_state.twist.twist.linear.z = ( previous_data - 
+                message_localize_state.pose.pose.position.z ) * 60 / 
+                ( load_sensor_pressure.header.stamp - message_localize_state.header.stamp ).toSec();
+
         // Set variable transform 
         transform_localize_state.setOrigin( tf::Vector3( 
                 message_localize_state.pose.pose.position.x,
