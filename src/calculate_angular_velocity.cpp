@@ -26,24 +26,7 @@ void calculate_angular_velocity( sensor_msgs::Imu* ptr_input ,
             ptr_input->orientation.w );
     tf::Quaternion diff_quaternion = input_quaternion * collect_quaternion.inverse();
 
-    double multiple = 60/(ptr_input->header.stamp - collect_time_stamp).toSec();
-
-    geometry_msgs::Vector3 data_output;
-    tf::Matrix3x3( diff_quaternion ).getRPY( data_output.x , data_output.y , data_output.z );
-    data_output.x *= multiple;
-    data_output.y *= multiple;
-    data_output.z *= multiple;
-    *ptr_output = data_output;
-}
-
-void calculate_angular_velocity( tf::Quaternion* ptr_input ,
-        geometry_msgs::Vector3* ptr_output , ros::Time time_stamp  )
-{
-    static ros::Time collect_time_stamp = ros::Time::now();
-    static tf::Quaternion collect_quaternion = tf::Quaternion( 0 , 0 , 0 , 1 );
-    tf::Quaternion diff_quaternion = (*ptr_input) * collect_quaternion.inverse();
-
-    double frequency = 1.0/( time_stamp - collect_time_stamp).toSec();
+    double frequency = 1/(ptr_input->header.stamp - collect_time_stamp).toSec();
 
     geometry_msgs::Vector3 data_output;
     tf::Matrix3x3( diff_quaternion ).getRPY( data_output.x , data_output.y , data_output.z );
@@ -51,4 +34,28 @@ void calculate_angular_velocity( tf::Quaternion* ptr_input ,
     data_output.y *= frequency;
     data_output.z *= frequency;
     *ptr_output = data_output;
+    zeabus_ros::convert::geometry_quaternion::tf( &(ptr_input->orientation) , &collect_quaternion );
+    collect_time_stamp = ptr_input->header.stamp;
+}
+
+void calculate_angular_velocity( tf::Quaternion* ptr_input ,
+        geometry_msgs::Vector3* ptr_output , ros::Time time_stamp  )
+{
+    static ros::Time collect_time_stamp = ros::Time::now();
+    static tf::Quaternion collect_quaternion = tf::Quaternion( 0 , 0 , 0 , 1 );
+
+    tf::Quaternion diff_quaternion = (*ptr_input) * collect_quaternion.inverse();
+    double frequency = fabs( 1.0/( time_stamp - collect_time_stamp).toSec() );
+
+    // For look how to get RPY
+//    tf::Matrix3x3( collect_quaternion ).getRPY( temp.x , temp.y , temp.z );
+
+    geometry_msgs::Vector3 data_output;
+    tf::Matrix3x3( diff_quaternion ).getRPY( data_output.x , data_output.y , data_output.z );
+    data_output.x *= frequency;
+    data_output.y *= frequency;
+    data_output.z *= frequency;
+    *ptr_output = data_output;
+    collect_quaternion = *ptr_input;
+    collect_time_stamp = time_stamp;
 }
