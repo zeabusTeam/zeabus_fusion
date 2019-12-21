@@ -45,12 +45,16 @@
 
 #include    <calculate_angular_velocity.hpp>
 
+#include    <calculate_linear_velocity.hpp>
+
 int main( int argv , char** argc )
 {
     zeabus_ros::Node node( argv , argc , "localize" );
 
     ros::NodeHandle ph("~"); // for param node handle
     ros::NodeHandle nh(""); // general node handle
+
+    AccelerationHandle ah(); // acceleration handle
 
     node.spin();
     // This frequency is tell you about frequency to calculate new state of robot
