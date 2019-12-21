@@ -25,6 +25,7 @@ add_executable( localize
     src/localize.cpp # Main file
     src/calculate_angular_velocity.cpp # File algorithm sequence calculate angular velocity
     src/target_service.cpp # File ros part about service to configure target state
+    src/calculate_linear_velocity.cpp # File algorithm sequence calculate linear velocity
 )
 add_dependencies( localize ${catkin_EXPORTED_TARGETS} )
 target_link_libraries( localize

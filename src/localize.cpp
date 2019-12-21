@@ -54,7 +54,8 @@ int main( int argv , char** argc )
     ros::NodeHandle ph("~"); // for param node handle
     ros::NodeHandle nh(""); // general node handle
 
-    AccelerationHandle ah(); // acceleration handle
+    AccelerationHandle ah; // acceleration handle
+    ah.reset_state();
 
     node.spin();
     // This frequency is tell you about frequency to calculate new state of robot
@@ -168,6 +169,8 @@ int main( int argv , char** argc )
                     translation_pressure.x(),
                     translation_pressure.y(),
                     translation_pressure.z() );
+
+            ah.setup_rotation_quaternion( rotation_imu );
             goto active_main;
         }
         catch( tf::TransformException ex )
@@ -209,11 +212,13 @@ active_main:
 
         zeabus_ros::convert::geometry_quaternion::tf( &load_sensor_imu.orientation, 
                 &origin_orientation );
+
 #ifdef _ROTATION_IMU_SYSTEM_
         origin_orientation = conversation_coordinate.inverse() * 
                 origin_orientation * 
                 conversation_coordinate;
-#endif
+#endif // _ROTATION_IMU_SYSTEM_
+
         current_orientation = rotation_imu * origin_orientation;
         current_orientation = tf::Quaternion( -1.0*current_orientation.x() ,
                 -1.0*current_orientation.y(),
@@ -237,6 +242,9 @@ active_main:
         message_localize_state.twist.twist.linear.z = ( previous_data - 
                 message_localize_state.pose.pose.position.z ) * 60 / 
                 ( load_sensor_pressure.header.stamp - message_localize_state.header.stamp ).toSec();
+
+        ah.updated( &load_sensor_imu.header.stamp , &load_sensor_imu.linear_acceleration );
+        ah.get_velocity( &message_localize_state.twist.twist.linear );
 
         // Set variable transform 
         transform_localize_state.setOrigin( tf::Vector3( 

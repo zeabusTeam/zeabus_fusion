@@ -34,7 +34,7 @@ class AccelerationHandle
     public:
         AccelerationHandle( tf::Quaternion rotation = tf::Quaternion( 0 , 0 , 0 , 1 ) );
 
-        void setup_rotation_quaternion( tf::Quaternion rotation_imu );
+        void setup_rotation_quaternion( tf::Quaternion rotation );
 
         void reset_state();
 
