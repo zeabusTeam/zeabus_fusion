@@ -10,6 +10,7 @@
 // REFERENCE
 
 // MACRO SET
+//#define _SHOW_BASE_LINK_ACCELERATION_
 
 // MACRO CONDITION
 
@@ -41,6 +42,11 @@ void AccelerationHandle::reset_state()
 void AccelerationHandle::updated( const ros::Time* stamp_time, 
         const geometry_msgs::Vector3* linear_acceleration )
 {
+#ifdef _SHOW_BASE_LINK_ACCELERATION_
+    printf( "receive acceleration : %8.3f%8.3f%8.3f\n" , linear_acceleration->x,
+            linear_acceleration->y,
+            linear_acceleration->z );
+#endif // _SHOW_BASE_LINK_ACCELERATION_
     tf::Quaternion robot_linear_velocity;
     zeabus_ros::convert::geometry_vector3::tf( linear_acceleration , &robot_linear_velocity );
     robot_linear_velocity = this->rotation.inverse() * 
