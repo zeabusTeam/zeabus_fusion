@@ -11,6 +11,7 @@
 
 // MACRO SET
 //#define _SHOW_BASE_LINK_ACCELERATION_
+//#define _SHOW_OUTPUT_VELOCITY_
 
 // MACRO CONDITION
 
@@ -64,5 +65,10 @@ void AccelerationHandle::updated( const ros::Time* stamp_time,
 void AccelerationHandle::get_velocity( geometry_msgs::Vector3* linear_velocity )
 {
     *linear_velocity = this->linear_velocity;
+#ifdef _SHOW_OUTPUT_VELOCITY_
+    printf( "output velocity : %8.3f%8.3f%8.3f\n" , linear_velocity->x,
+            linear_velocity->y,
+            linear_velocity->z );
+#endif // _SHOW_BASE_LINK_ACCELERATION_
 } // function get_velocity
 
