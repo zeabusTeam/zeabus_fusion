@@ -26,7 +26,7 @@ void calculate_angular_velocity( sensor_msgs::Imu* ptr_input ,
             ptr_input->orientation.w );
     tf::Quaternion diff_quaternion = input_quaternion * collect_quaternion.inverse();
 
-    double frequency = 1/(ptr_input->header.stamp - collect_time_stamp).toSec();
+    double frequency = 1.0/(ptr_input->header.stamp - collect_time_stamp).toSec();
 
     geometry_msgs::Vector3 data_output;
     tf::Matrix3x3( diff_quaternion ).getRPY( data_output.x , data_output.y , data_output.z );
@@ -45,7 +45,7 @@ void calculate_angular_velocity( tf::Quaternion* ptr_input ,
     static tf::Quaternion collect_quaternion = tf::Quaternion( 0 , 0 , 0 , 1 );
 
     tf::Quaternion diff_quaternion = (*ptr_input) * collect_quaternion.inverse();
-    double frequency = fabs( 1.0/( time_stamp - collect_time_stamp).toSec() );
+    double frequency =  1.0/( time_stamp - collect_time_stamp).toSec() ;
 
     // For look how to get RPY
 //    tf::Matrix3x3( collect_quaternion ).getRPY( temp.x , temp.y , temp.z );
