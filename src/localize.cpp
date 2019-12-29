@@ -100,6 +100,19 @@ int main( int argv , char** argc )
     // Part setup publisher message for localize
     ros::Publisher publisher_localize = nh.advertise< nav_msgs::Odometry >( topic_output , 1 );
 
+    // Part setup message for use in main loop
+    std::mutex lock_localize_state;
+    nav_msgs::Odometry message_localize_state;
+    message_localize_state.pose.pose.orientation.w = 1;
+    zeabus_utility::HeaderFloat64 load_sensor_pressure;
+    sensor_msgs::Imu load_sensor_imu;
+    ros::Rate rate( frequency );
+    static tf::TransformBroadcaster broadcaster;
+    tf::Transform transform_localize_state;
+    // set constant value
+    message_localize_state.header.frame_id = "odom";
+    message_localize_state.child_frame_id = "base_link";
+
     // Part about set target state
     std::mutex lock_target_state;
     geometry_msgs::Pose message_target_state;
@@ -116,19 +129,10 @@ int main( int argv , char** argc )
     TargetService target_service( &nh );
     target_service.setup_all_variable( &update_target_state,
         &message_target_state,
-        &lock_target_state );
+        &lock_target_state,
+        &( message_localize_state.pose.pose ),
+        &lock_localize_state );
     target_service.setup_all_service();
-    // Part setup message for use in main loop
-    nav_msgs::Odometry message_localize_state;
-    message_localize_state.pose.pose.orientation.w = 1;
-    zeabus_utility::HeaderFloat64 load_sensor_pressure;
-    sensor_msgs::Imu load_sensor_imu;
-    ros::Rate rate( frequency );
-    static tf::TransformBroadcaster broadcaster;
-    tf::Transform transform_localize_state;
-    // set constant value
-    message_localize_state.header.frame_id = "odom";
-    message_localize_state.child_frame_id = "base_link";
     // Next step prepare about tramslation sensor handle
     static tf::TransformListener listener;
     tf::StampedTransform temp_transform;
@@ -220,7 +224,9 @@ active_main:
         load_sensor_pressure = message_sensor_pressure;
         lock_sensor_pressure.unlock();
 
+        lock_localize_state.lock();
         message_localize_state.pose.pose.position.z = load_sensor_pressure.data;
+        lock_localize_state.unlock();
 
         zeabus_ros::convert::geometry_quaternion::tf( &load_sensor_imu.orientation, 
                 &origin_orientation );
@@ -242,6 +248,7 @@ active_main:
                 &message_localize_state.twist.twist.angular,
                 load_sensor_imu.header.stamp );
         // Get orientation of robot
+        lock_localize_state.lock();
         zeabus_ros::convert::geometry_quaternion::tf( &current_orientation, 
                 &message_localize_state.pose.pose.orientation ) ;
         message_localize_state.header.stamp = ros::Time::now();
@@ -250,6 +257,7 @@ active_main:
         double previous_data = message_localize_state.pose.pose.position.z;
         message_localize_state.pose.pose.position.z = load_sensor_pressure.data -
                 ( current_orientation * translation_pressure * current_orientation.inverse() ).z();
+        lock_localize_state.unlock();
                  
         message_localize_state.twist.twist.linear.z = ( previous_data - 
                 message_localize_state.pose.pose.position.z ) * 60 / 

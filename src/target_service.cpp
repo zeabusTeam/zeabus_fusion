@@ -26,11 +26,15 @@ TargetService::TargetService( ros::NodeHandle* ptr_node_handle )
 
 void TargetService::setup_all_variable( bool* ptr_update_target_state,
         geometry_msgs::Pose* ptr_message_target_state,
-        std::mutex* ptr_lock )
+        std::mutex* ptr_lock_target,
+        geometry_msgs::Pose* ptr_message_current_state,
+        std::mutex* ptr_lock_current )
 {
     this->ptr_updated_target_state = ptr_update_target_state;
     this->ptr_message_target_state = ptr_message_target_state;
-    this->ptr_lock = ptr_lock;
+    this->ptr_message_current_state = ptr_message_current_state;
+    this->ptr_lock_current = ptr_lock_current;
+    this->ptr_lock_target = ptr_lock_target;
 }
 
 void TargetService::setup_all_service()
@@ -52,25 +56,29 @@ void TargetService::setup_all_service()
             , &TargetService::callback_absolute_pitch , this );
     this->service_absolute_yaw = this->ptr_node_handle->advertiseService( "/target/absolute/yaw"
             , &TargetService::callback_absolute_yaw , this );
+    this->service_plane_xy = this->ptr_node_handle->advertiseService( "/target/velocity/plane_xy"
+            , &TargetService::callback_plane_xy , this );
+    this->service_reset_all = this->ptr_node_handle->advertiseService( "/target/reset/all"
+            , &TargetService::callback_reset_all , this );
 }
 
 bool TargetService::callback_absolute_depth( zeabus_utility::SendFloat::Request& request,
         zeabus_utility::SendFloat::Response& response )
 {
-    this->ptr_lock->lock(); // acquire lock
+    this->ptr_lock_target->lock(); // acquire lock
     this->ptr_message_target_state->position.z = request.data;
     this->updated_target_state();
-    this->ptr_lock->unlock(); // release lock
+    this->ptr_lock_target->unlock(); // release lock
     return true;
 }
 
 bool TargetService::callback_relative_depth( zeabus_utility::SendFloat::Request& request, 
         zeabus_utility::SendFloat::Response& reponse )
 {
-    this->ptr_lock->lock(); // acquire lock
+    this->ptr_lock_target->lock(); // acquire lock
     this->ptr_message_target_state->position.z += request.data;
     this->updated_target_state();
-    this->ptr_lock->unlock(); // release lock
+    this->ptr_lock_target->unlock(); // release lock
     return true;
 }
 
@@ -84,11 +92,11 @@ bool TargetService::callback_relative_roll( zeabus_utility::SendFloat::Request& 
             &current_quaternion );
     relative_quaternion.setRPY( request.data , 0 , 0 );
     current_quaternion = relative_quaternion * current_quaternion;
-    this->ptr_lock->lock(); // acquire lock
+    this->ptr_lock_target->lock(); // acquire lock
     zeabus_ros::convert::geometry_quaternion::tf( &current_quaternion , 
             &( this->ptr_message_target_state->orientation ) );
     this->updated_target_state();
-    this->ptr_lock->unlock(); // release lock
+    this->ptr_lock_target->unlock(); // release lock
     return true;
 }
 
@@ -101,11 +109,11 @@ bool TargetService::callback_relative_pitch( zeabus_utility::SendFloat::Request&
             &current_quaternion );
     relative_quaternion.setRPY( 0 , request.data , 0 );
     current_quaternion = relative_quaternion * current_quaternion;
-    this->ptr_lock->lock(); // acquire lock
+    this->ptr_lock_target->lock(); // acquire lock
     zeabus_ros::convert::geometry_quaternion::tf( &current_quaternion , 
             &( this->ptr_message_target_state->orientation ) );
     this->updated_target_state();
-    this->ptr_lock->unlock(); // release lock
+    this->ptr_lock_target->unlock(); // release lock
     return true;
 }
 
@@ -118,11 +126,11 @@ bool TargetService::callback_relative_yaw( zeabus_utility::SendFloat::Request& r
             &current_quaternion );
     relative_quaternion.setRPY( 0 , 0 , request.data );
     current_quaternion = relative_quaternion * current_quaternion;
-    this->ptr_lock->lock(); // acquire lock
+    this->ptr_lock_target->lock(); // acquire lock
     zeabus_ros::convert::geometry_quaternion::tf( &current_quaternion , 
             &( this->ptr_message_target_state->orientation ) );
     this->updated_target_state();
-    this->ptr_lock->unlock(); // release lock
+    this->ptr_lock_target->unlock(); // release lock
     return true;
 }
 // part of absolute orientation
@@ -135,11 +143,11 @@ bool TargetService::callback_absolute_roll( zeabus_utility::SendFloat::Request& 
             &current_quaternion );
     tf::Matrix3x3( current_quaternion ).getRPY( temp_vector3.x , temp_vector3.y , temp_vector3.z );
     current_quaternion.setRPY( request.data , temp_vector3.y , temp_vector3.z );
-    this->ptr_lock->lock(); // acquire lock
+    this->ptr_lock_target->lock(); // acquire lock
     zeabus_ros::convert::geometry_quaternion::tf( &current_quaternion , 
             &( this->ptr_message_target_state->orientation ) );
     this->updated_target_state();
-    this->ptr_lock->unlock(); // release lock
+    this->ptr_lock_target->unlock(); // release lock
     return true;
 }
 
@@ -152,11 +160,11 @@ bool TargetService::callback_absolute_pitch( zeabus_utility::SendFloat::Request&
             &current_quaternion );
     tf::Matrix3x3( current_quaternion ).getRPY( temp_vector3.x , temp_vector3.y , temp_vector3.z );
     current_quaternion.setRPY( temp_vector3.x , request.data , temp_vector3.z );
-    this->ptr_lock->lock(); // acquire lock
+    this->ptr_lock_target->lock(); // acquire lock
     zeabus_ros::convert::geometry_quaternion::tf( &current_quaternion , 
             &( this->ptr_message_target_state->orientation ) );
     this->updated_target_state();
-    this->ptr_lock->unlock(); // release lock
+    this->ptr_lock_target->unlock(); // release lock
     return true;
 }
 
@@ -169,12 +177,55 @@ bool TargetService::callback_absolute_yaw( zeabus_utility::SendFloat::Request& r
             &current_quaternion );
     tf::Matrix3x3( current_quaternion ).getRPY( temp_vector3.x , temp_vector3.y , temp_vector3.z );
     current_quaternion.setRPY( temp_vector3.x , temp_vector3.z , request.data );
-    this->ptr_lock->lock(); // acquire lock
+    this->ptr_lock_target->lock(); // acquire lock
     zeabus_ros::convert::geometry_quaternion::tf( &current_quaternion , 
             &( this->ptr_message_target_state->orientation ) );
     this->updated_target_state();
-    this->ptr_lock->unlock(); // release lock
+    this->ptr_lock_target->unlock(); // release lock
     return true;
+}
+
+// Part reset target state
+bool TargetService::callback_reset_all( zeabus_utility::SendBool::Request& request,
+        zeabus_utility::SendBool::Response& reponse )
+{
+    if( request.data )
+    {
+        this->ptr_lock_target->lock();
+        this->ptr_lock_current->lock();
+        *(this->ptr_message_target_state) = *(this->ptr_message_current_state );
+        this->updated_target_state();
+        this->ptr_lock_target->unlock();
+        this->ptr_lock_current->unlock();
+    }
+    else
+    {
+        this->ptr_lock_target->lock();
+        this->ptr_lock_current->lock();
+        this->ptr_message_target_state->orientation = this->ptr_message_current_state->orientation;
+        this->updated_target_state();
+        this->ptr_lock_target->unlock();
+        this->ptr_lock_current->unlock();
+    }
+    return true;
+}
+
+// Part special command and have restrict
+bool TargetService::callback_plane_xy( zeabus_utility::SendFloat::Request& request,
+        zeabus_utility::SendFloat::Response& reponse )
+{
+    geometry_msgs::Vector3 temp_vector3;
+    tf::Quaternion current_quaternion;
+    zeabus_ros::convert::geometry_quaternion::tf( &(this->ptr_message_target_state->orientation ),
+            &current_quaternion );
+    tf::Matrix3x3( current_quaternion ).getRPY( temp_vector3.x , temp_vector3.y , temp_vector3.z );
+    temp_vector3.x = request.data * cos( temp_vector3.z );
+    temp_vector3.y = request.data * sin( temp_vector3.z );
+    this->ptr_lock_target->lock(); //acquire lock of target state
+    this->ptr_message_target_state->position.x = temp_vector3.x;
+    this->ptr_message_target_state->position.y = temp_vector3.y;
+    this->updated_target_state();
+    this->ptr_lock_target->unlock(); // release lock of target state
 }
 
 void TargetService::updated_target_state()
