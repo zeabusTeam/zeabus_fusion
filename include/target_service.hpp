@@ -51,6 +51,10 @@ class TargetService
         bool callback_absolute_depth( zeabus_utility::SendFloat::Request& request,
                 zeabus_utility::SendFloat::Response& response );
 
+        ros::ServiceServer service_relative_depth;
+        bool callback_relative_depth( zeabus_utility::SendFloat::Request& request,
+                zeabus_utility::SendFloat::Response& response );
+
         ros::ServiceServer service_relative_yaw;
         bool callback_relative_yaw( zeabus_utility::SendFloat::Request& request,
                 zeabus_utility::SendFloat::Response& response );
