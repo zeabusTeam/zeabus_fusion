@@ -54,9 +54,9 @@ void AccelerationHandle::updated( const ros::Time* stamp_time,
             robot_linear_velocity * 
             this->rotation;
     double multiple = ( *stamp_time - this->stamp_time ).toSec() / 2.0;
-    this->linear_velocity.x += ( this->linear_acceleration.x + linear_acceleration->x ) * multiple; 
-    this->linear_velocity.y += ( this->linear_acceleration.y + linear_acceleration->y ) * multiple; 
-    this->linear_velocity.z += ( this->linear_acceleration.z + linear_acceleration->z ) * multiple;
+//    this->linear_velocity.x += ( this->linear_acceleration.x + linear_acceleration->x ) * multiple;
+//    this->linear_velocity.y += ( this->linear_acceleration.y + linear_acceleration->y ) * multiple;
+//    this->linear_velocity.z += ( this->linear_acceleration.z + linear_acceleration->z ) * multiple;
     // Updated local varible
     this->stamp_time = *stamp_time;
     this->linear_acceleration = *linear_acceleration;

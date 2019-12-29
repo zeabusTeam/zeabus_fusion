@@ -60,7 +60,7 @@ int main( int argv , char** argc )
     node.spin();
     // This frequency is tell you about frequency to calculate new state of robot
     int frequency;
-    ph.param< int >( "frequency" , frequency , 50 );    
+    ph.param< int >( "frequency" , frequency , 30 );    
 
     std::string topic_imu;
     ph.param< std::string >( "topic_imu" ,
