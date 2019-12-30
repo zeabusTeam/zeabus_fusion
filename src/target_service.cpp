@@ -226,6 +226,8 @@ bool TargetService::callback_plane_xy( zeabus_utility::SendFloat::Request& reque
     this->ptr_message_target_state->position.y = temp_vector3.y;
     this->updated_target_state();
     this->ptr_lock_target->unlock(); // release lock of target state
+
+    return true;
 }
 
 void TargetService::updated_target_state()
