@@ -51,6 +51,7 @@ void calculate_angular_velocity( tf::Quaternion* ptr_input ,
 //    tf::Matrix3x3( collect_quaternion ).getRPY( temp.x , temp.y , temp.z );
 
     geometry_msgs::Vector3 data_output;
+    diff_quaternion = ptr_input->inverse() * diff_quaternion * (*ptr_input) ;
     tf::Matrix3x3( diff_quaternion ).getRPY( data_output.x , data_output.y , data_output.z );
     data_output.x *= frequency;
     data_output.y *= frequency;
