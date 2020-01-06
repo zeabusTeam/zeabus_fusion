@@ -91,6 +91,7 @@ bool TargetService::callback_relative_roll( zeabus_utility::SendFloat::Request& 
     zeabus_ros::convert::geometry_quaternion::tf( &(this->ptr_message_target_state->orientation) ,
             &current_quaternion );
     relative_quaternion.setRPY( request.data , 0 , 0 );
+    relative_quaternion = current_quaternion * relative_quaternion * current_quaternion.inverse();
     current_quaternion = relative_quaternion * current_quaternion;
     this->ptr_lock_target->lock(); // acquire lock
     zeabus_ros::convert::geometry_quaternion::tf( &current_quaternion , 
@@ -108,6 +109,7 @@ bool TargetService::callback_relative_pitch( zeabus_utility::SendFloat::Request&
     zeabus_ros::convert::geometry_quaternion::tf( &(this->ptr_message_target_state->orientation) ,
             &current_quaternion );
     relative_quaternion.setRPY( 0 , request.data , 0 );
+    relative_quaternion = current_quaternion * relative_quaternion * current_quaternion.inverse();
     current_quaternion = relative_quaternion * current_quaternion;
     this->ptr_lock_target->lock(); // acquire lock
     zeabus_ros::convert::geometry_quaternion::tf( &current_quaternion , 
@@ -125,6 +127,7 @@ bool TargetService::callback_relative_yaw( zeabus_utility::SendFloat::Request& r
     zeabus_ros::convert::geometry_quaternion::tf( &(this->ptr_message_target_state->orientation) ,
             &current_quaternion );
     relative_quaternion.setRPY( 0 , 0 , request.data );
+    relative_quaternion = current_quaternion * relative_quaternion * current_quaternion.inverse();
     current_quaternion = relative_quaternion * current_quaternion;
     this->ptr_lock_target->lock(); // acquire lock
     zeabus_ros::convert::geometry_quaternion::tf( &current_quaternion , 
