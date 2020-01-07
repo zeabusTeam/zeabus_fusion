@@ -133,15 +133,16 @@ int main( int argv , char** argc )
     // Part manage all service for ros to set target state
     TargetService target_service( &nh );
     target_service.setup_all_variable( &update_target_state,
-        &message_target_state,
-        &lock_target_state,
-        &( message_localize_state.pose.pose ),
-        &lock_localize_state );
+            &message_target_state,
+            &lock_target_state,
+            &( message_localize_state.pose.pose ),
+            &lock_localize_state );
     target_service.setup_all_service();
 
     // Part about updated target state by control type subscriber
     UpdatedTargetState utsh( &nh ); // Updated target state handle
-    utsh.setup_all_variable( &message_target_state, 
+    utsh.setup_all_variable( &update_target_state, 
+            &message_target_state, 
             &lock_target_state,
             &( message_localize_state.pose.pose ),
             &lock_localize_state );

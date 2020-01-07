@@ -42,7 +42,8 @@ class UpdatedTargetState
     public:
         UpdatedTargetState( ros::NodeHandle* ptr_node_handle );
 
-        void setup_all_variable( geometry_msgs::Pose* ptr_message_target_state,
+        void setup_all_variable( bool* ptr_updated_target_state,
+                geometry_msgs::Pose* ptr_message_target_state,
                 std::mutex* ptr_lock_target,
                 geometry_msgs::Pose* ptr_message_current_state,
                 std::mutex* ptr_lock_current );
@@ -58,6 +59,7 @@ class UpdatedTargetState
 
         double timeout;
 
+        bool* ptr_updated_target_state;
         ros::NodeHandle* ptr_node_handle;
         geometry_msgs::Pose* ptr_message_target_state;
         geometry_msgs::Pose* ptr_message_current_state;

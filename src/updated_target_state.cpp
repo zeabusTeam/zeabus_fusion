@@ -20,11 +20,13 @@ UpdatedTargetState::UpdatedTargetState( ros::NodeHandle* ptr_node_handle )
     this->ptr_node_handle = ptr_node_handle;
 }
 
-void UpdatedTargetState::setup_all_variable( geometry_msgs::Pose* ptr_message_target_state,
+void UpdatedTargetState::setup_all_variable( bool* ptr_updated_target_state,
+        geometry_msgs::Pose* ptr_message_target_state,
         std::mutex* ptr_lock_target,
         geometry_msgs::Pose* ptr_message_current_state,
         std::mutex* ptr_lock_current )
 {
+    this->ptr_updated_target_state = ptr_updated_target_state;
     this->ptr_message_target_state = ptr_message_target_state;
     this->ptr_lock_target = ptr_lock_target;
     this->ptr_message_current_state = ptr_message_current_state;
@@ -100,6 +102,7 @@ void UpdatedTargetState::updated( ros::Time* time_stamp )
             this->ptr_message_target_state->position.z = 
                     this->ptr_message_current_state->position.z;
         }
+        *(this->ptr_updated_target_state) = true;
         this->ptr_lock_target->unlock();
 
     } // That mean your message will receive to reset target
