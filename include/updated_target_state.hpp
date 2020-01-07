@@ -19,7 +19,7 @@
 
 #include    <ros/ros.h>
 
-#include    <zeabus_utility/BoolArray6,hpp>
+#include    <zeabus_utility/BoolArray6.h>
 
 #include    <geometry_msgs/Pose.h>
 
@@ -47,7 +47,7 @@ class UpdatedTargetState
                 geometry_msgs::Pose* ptr_message_current_state,
                 std::mutex* ptr_lock_current );
 
-        void setup_subscriber( std::string topic_input , double timeout );
+        void setup_subscriber( std::string topic_input , const double timeout );
 
         void updated( ros::Time* time_stamp );
 

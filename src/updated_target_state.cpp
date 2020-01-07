@@ -31,23 +31,23 @@ void UpdatedTargetState::setup_all_variable( geometry_msgs::Pose* ptr_message_ta
     this->ptr_lock_current = ptr_lock_current;
 }
 
-void UpdatedTargetState::setup_subscriber( std::string topic_input , double timeout )
+void UpdatedTargetState::setup_subscriber( std::string topic_input , const double timeout )
 {
     this->timeout = timeout;
-    this->listener_mask_updated = zeabus_ros::subscriber::BaseClass< zeabus_utility::BoolArray6 >(
-            this->ptr_node_handle, 
-            &this->message  );
+    this->listener_mask_updated.setup_base( this->ptr_node_handle, &this->message );
     this->listener_mask_updated.setup_mutex_data( &this->lock_mask );
-    this->listener_mask_updated.setup_subscriber_timestamp( topic_input );
+    this->listener_mask_updated.setup_subscriber_timestamp( topic_input , 1 );
 }
 
 void UpdatedTargetState::updated( ros::Time* time_stamp )
 {
     bool updated = false;
+    boost::array< bool , 6 > vector_mask;
     this->lock_mask.lock();
     if( ( *time_stamp - this->message.header.stamp).toSec() < this->timeout )
     {
         updated = true;
+        vector_mask = this->message.mask;
     }
     this->lock_mask.unlock(); 
 
@@ -58,7 +58,7 @@ void UpdatedTargetState::updated( ros::Time* time_stamp )
         {
             tf::Quaternion quaternion;
             geometry_msgs::Vector3 current_vector;
-            geometry_msgs::vector3 target_vector;
+            geometry_msgs::Vector3 target_vector;
             zeabus_ros::convert::geometry_quaternion::tf( 
                     &( this->ptr_message_current_state->orientation ),
                     &( quaternion ) );
@@ -73,9 +73,9 @@ void UpdatedTargetState::updated( ros::Time* time_stamp )
             tf::Matrix3x3( quaternion ).getRPY( target_vector.x,
                     target_vector.y,
                     target_vector.z );
-            if( this->message.mask[ 3 ] ) target_vector.x = current_vector.x; 
-            if( this->message.mask[ 4 ] ) target_vector.y = current_vector.y; 
-            if( this->message.mask[ 5 ] ) target_vector.z = current_vector.z;
+            if( vector_mask[ 3 ] ) target_vector.x = current_vector.x; 
+            if( vector_mask[ 4 ] ) target_vector.y = current_vector.y; 
+            if( vector_mask[ 5 ] ) target_vector.z = current_vector.z;
             quaternion.setRPY( target_vector.x , target_vector.y , target_vector.z ); 
             zeabus_ros::convert::geometry_quaternion::tf(
                     &( quaternion ),
@@ -85,17 +85,17 @@ void UpdatedTargetState::updated( ros::Time* time_stamp )
 
         // Start part updated position
         this->ptr_lock_target->lock();
-        if( this->message.mask[ 0 ] ) 
+        if( vector_mask[ 0 ] ) 
         {
             this->ptr_message_target_state->position.x = 
                     this->ptr_message_current_state->position.x;
         }
-        if( this->message.mask[ 1 ] ) 
+        if( vector_mask[ 1 ] ) 
         {
             this->ptr_message_target_state->position.y = 
                     this->ptr_message_current_state->position.y;
         }
-        if( this->message.mask[ 2 ] ) 
+        if( vector_mask[ 2 ] ) 
         {
             this->ptr_message_target_state->position.z = 
                     this->ptr_message_current_state->position.z;

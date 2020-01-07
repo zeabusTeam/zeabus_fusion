@@ -47,6 +47,10 @@
 
 #include    <calculate_linear_velocity.hpp>
 
+#include    <updated_target_state.hpp>
+
+const double timeout = 0.2;
+
 int main( int argv , char** argc )
 {
     zeabus_ros::Node node( argv , argc , "localize" );
@@ -125,6 +129,7 @@ int main( int argv , char** argc )
     message_target_state.orientation.z = 0;
     message_target_state.orientation.w = 1;
     bool update_target_state = true;
+
     // Part manage all service for ros to set target state
     TargetService target_service( &nh );
     target_service.setup_all_variable( &update_target_state,
@@ -133,6 +138,15 @@ int main( int argv , char** argc )
         &( message_localize_state.pose.pose ),
         &lock_localize_state );
     target_service.setup_all_service();
+
+    // Part about updated target state by control type subscriber
+    UpdatedTargetState utsh( &nh ); // Updated target state handle
+    utsh.setup_all_variable( &message_target_state, 
+            &lock_target_state,
+            &( message_localize_state.pose.pose ),
+            &lock_localize_state );
+    utsh.setup_subscriber( "localize/reset" , timeout );
+
     // Next step prepare about tramslation sensor handle
     static tf::TransformListener listener;
     tf::StampedTransform temp_transform;
@@ -213,6 +227,7 @@ active_main:
                     message_target_state.orientation.w ) );
             update_target_state = false;
         }
+
         lock_target_state.unlock();
         // load message sensor imu
         lock_sensor_imu.lock();
@@ -265,6 +280,8 @@ active_main:
 
         ah.updated( &load_sensor_imu.header.stamp , &load_sensor_imu.linear_acceleration );
         ah.get_velocity( &message_localize_state.twist.twist.linear );
+
+        utsh.updated( &message_localize_state.header.stamp );
 
         // Set variable transform 
         transform_localize_state.setOrigin( tf::Vector3( 
