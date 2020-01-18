@@ -40,3 +40,10 @@ add_executable( quaternion
 target_link_libraries( quaternion
     ${zeabus_library_LIBRARIES}
 )
+
+add_executable( robot
+    src/know_robot.cpp
+)
+target_link_libraries( robot
+    ${zeabus_library_LIBRARIES}
+)
