@@ -47,3 +47,10 @@ add_executable( robot
 target_link_libraries( robot
     ${zeabus_library_LIBRARIES}
 )
+
+add_executable( force
+    src/know_force.cpp
+)
+target_link_libraries( force
+    ${zeabus_library_LIBRARIES}
+)

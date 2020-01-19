@@ -1,4 +1,4 @@
-// FILE			: know_robit.cpp
+// FILE			: know_robot.cpp
 // AUTHOR		: K.Supasan
 // CREATE ON	: 2020, January 18 (UTC+0)
 // MAINTAINER	: K.Supasan
