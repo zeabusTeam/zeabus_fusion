@@ -26,6 +26,8 @@ void calculate_angular_velocity( sensor_msgs::Imu* ptr_input ,
             ptr_input->orientation.w );
     tf::Quaternion diff_quaternion = input_quaternion * collect_quaternion.inverse();
 
+    diff_quaternion = input_quaternion.inverse() * diff_quaternion * input_quaternion ;
+
     double frequency = 1.0/(ptr_input->header.stamp - collect_time_stamp).toSec();
 
     geometry_msgs::Vector3 data_output;
