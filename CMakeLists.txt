@@ -34,6 +34,14 @@ target_link_libraries( localize
     ${catkin_LIBRARIES}
 )
 
+add_executable( visual
+    src/mapper/mapper.cpp # Main file
+)
+target_link_libraries( visual 
+    ${zeabus_library_LIBRARIES}
+    ${catkin_LIBRARIES}
+)
+
 add_executable( quaternion
     src/know_quaternion.cpp
 )
