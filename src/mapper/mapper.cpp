@@ -43,6 +43,7 @@ int main( int argv , char** argc )
     sth.spin( 10 );
 
 active_main:
+    printf( "Start active main part\n");
     while( ros::ok() )
     {
         rate.sleep();
