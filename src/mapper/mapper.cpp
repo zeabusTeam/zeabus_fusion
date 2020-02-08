@@ -27,8 +27,9 @@ int main( int argv , char** argc )
     // Part variable inital setup
     zeabus::FileCSV fh; // file module to collect mapper
     zeabus_ros::StaticTF sth; // static transformation handle
-    std::string file_name;
-
+    std::string file_name; // file to collect map detail <visual map>
+    std::string topic_current_force; // Use to collect std::string of input topic current force
+    std::string topic_current_state; // Use to collect std::string of input topic current state    
 
     ros::Rate rate( 30 );
     // Part setup parameter variable for use in ros system

@@ -64,7 +64,7 @@ int main( int argv , char** argc )
     std::string topic_current_state;
     ph.param< std::string >( "topic_current_state" , topic_current_state , "localize/zeabus" );
 
-    const double gravity = 9.08665;
+    const double gravity = 9.78297;
     double mass;
     ph.param< double >( "weight" , mass , 35.05 ); // unit kilogram
     double weight = mass * gravity;
