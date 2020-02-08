@@ -1,2 +1,2 @@
-odom,visual_odom,0.0,0.0,0.0,0.0,0.0,1.57
-visual_odom,gate,10.0,0.0,0.0,0.0,0.0,0.0
+odom,odom_visual,0.0,0.0,0.0,0.0,0.0,1.57
+odom_visual,gate,10.0,0.0,0.0,0.0,0.0,0.0
