@@ -11,8 +11,12 @@
 
 // MACRO SET
 #define SHOW_DATA
+#define SHOW_ROBOT_FORCE
 
 // MACRO CONDITION
+#ifdef SHOW_DATA
+    #define SHOW_ROBOT_FORCE
+#endif // SHOW_DATA
 
 #include    <calculate_by_force.hpp>
 
@@ -38,7 +42,76 @@ void RobotForceHandle::setup_ptr_data( tf::Quaternion* ptr_current_quaternion ,
 void RobotForceHandle::calculate()
 {
 #ifdef SHOW_DATA
-    std::cout   << "CURRENT_FORCE  :\n\t" ;
+    std::cout   << "CURRENT_FORCE  :\n" ;
     zeabus_boost::print( *( this->ptr_mat_force_thruster ) );
 #endif // SHOW_DATA
+    tf::Quaternion temp_quaternion;
+    // First I will prepare data of buoncy force and weight
+    temp_quaternion = tf::Quaternion( 0 , 0 , this->buoncy , 0 ); // Load buoncy force odom frame
+    temp_quaternion = ptr_current_quaternion->inverse() * 
+            temp_quaternion * 
+            (*ptr_current_quaternion); // rotation force
+    this->vec_force_buoncy.a[ 0 ] = temp_quaternion.x(); // save x axis
+    this->vec_force_buoncy.a[ 1 ] = temp_quaternion.y(); // save y axis
+    this->vec_force_buoncy.a[ 2 ] = temp_quaternion.z(); // save z axis
+    temp_quaternion = tf::Quaternion( 0, 0, -1.0*this->weight, 0 ); // Load weight force odom frame
+    temp_quaternion = ptr_current_quaternion->inverse() * 
+            temp_quaternion * 
+            (*ptr_current_quaternion); // rotation force
+    this->vec_force_gravity.a[ 0 ] = temp_quaternion.x(); // save x axis
+    this->vec_force_gravity.a[ 1 ] = temp_quaternion.y(); // save y axis
+    this->vec_force_gravity.a[ 2 ] = temp_quaternion.z(); // save z axis
+    // Now we have linear force from buoncy force and weight
+    // Next we will prepare matrix of buoncy & gravity force
+    std::memcpy( (void*) &this->mat_force_buoncy.a[0][3],
+            (void*) boost::qvm::cross( this->vec_force_buoncy, 
+                    zeabus::robot::distance_center_buoncy ).a ,
+            sizeof( double ) * 3 ); // save part moment force buoncy force 
+    std::memcpy( (void*) this->mat_force_buoncy.a[0] , 
+            (void*) this->vec_force_buoncy.a , 
+            sizeof( double )* 3 ); // save part linear force by bouncy force
+    std::memcpy( (void*) &this->mat_force_gravity.a[0][3] , 
+            (void*)boost::qvm::cross( this->vec_force_gravity, 
+                    zeabus::robot::distance_center_gravity).a ,
+            sizeof( double ) * 3 ); // save part moment force by gravity force
+    std::memcpy( (void*) this->mat_force_gravity.a[0] , 
+            (void*)this->vec_force_gravity.a , 
+            sizeof( double )* 3 ); // save part linear force by gravity force
+#ifdef SHOW_DATA
+    std::cout   << "BUONCY FORCE   :\n";
+    zeabus_boost::print( this->mat_force_buoncy );
+    std::cout   << "GRAVITY FORCE  :\n";
+    zeabus_boost::print( this->mat_force_gravity );
+#endif // SHOW_DATA
+
+    // Next We will prepare matrix viscosity force
+    this->mat_force_viscosty.a[ 0 ][ 0 ] = this->ptr_vec_current_velocity->a[ 0 ] *
+            this->vec_constant_viscosty.a[ 0 ];
+    this->mat_force_viscosty.a[ 0 ][ 1 ] = this->ptr_vec_current_velocity->a[ 1 ] *
+            this->vec_constant_viscosty.a[ 1 ];
+    this->mat_force_viscosty.a[ 0 ][ 2 ] = this->ptr_vec_current_velocity->a[ 2 ] *
+            this->vec_constant_viscosty.a[ 2 ];
+    this->mat_force_viscosty.a[ 0 ][ 3 ] = this->ptr_vec_current_velocity->a[ 3 ] *
+            this->vec_constant_viscosty.a[ 3 ];
+    this->mat_force_viscosty.a[ 0 ][ 4 ] = this->ptr_vec_current_velocity->a[ 4 ] *
+            this->vec_constant_viscosty.a[ 4 ];
+    this->mat_force_viscosty.a[ 0 ][ 5 ] = this->ptr_vec_current_velocity->a[ 5 ] *
+            this->vec_constant_viscosty.a[ 5 ];
+    this->mat_force_viscosty.a[ 0 ][ 6 ] = this->ptr_vec_current_velocity->a[ 6 ] *
+            this->vec_constant_viscosty.a[ 6 ];
+    this->mat_force_viscosty.a[ 0 ][ 7 ] = this->ptr_vec_current_velocity->a[ 7 ] *
+            this->vec_constant_viscosty.a[ 7 ];
+   // The last we must to prepare matrix robot force 
+    this->mat_force_robot = ( *(this->ptr_mat_force_thruster ) ) * zeabus::robot::direction_all;
+
+#ifdef SHOW_DATA
+    std::cout   << "VISCOSTY FORCE :\n";
+    zeabus_boost::print( this->mat_force_viscosty );
+#endif // SHOW_DATA
+
+#ifdef SHOW_ROBOT_FORCE
+    std::cout   << "ROBOT FORCE    :\n";
+    zeabus_boost::print( this->mat_force_robot );
+#endif // SHOW_ROBOT_FORCE
+
 }

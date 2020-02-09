@@ -52,6 +52,8 @@ class RobotForceHandle
                 boost::qvm::mat< double , 1 , 8 >* ptr_mat_force_thruster,
                 boost::qvm::vec< double , 6 >* ptr_vec_current_velocity );
 
+        void setup_viscosty( const boost::qvm::vec< double , 6 > vec_constant_viscosty );
+
         void calculate();
 
     protected:
@@ -71,7 +73,7 @@ class RobotForceHandle
         boost::qvm::mat< double , 1 , 6 > mat_force_sum;
 
         boost::qvm::vec< double , 3 > vec_force_gravity;
-        boost::qvm::vec< double , 3 > vec_force_bunocy;
+        boost::qvm::vec< double , 3 > vec_force_buoncy;
         boost::qvm::vec< double , 6 > vec_constant_viscosty;
         boost::qvm::vec< double , 6 > vec_acceleration;        
 

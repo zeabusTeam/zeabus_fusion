@@ -31,7 +31,7 @@ int main( int argv , char** argc )
     std::string file_name; // file to collect map detail <visual map>
     std::string topic_current_force; // Use to collect std::string of input topic current force
     std::string topic_current_state; // Use to collect std::string of input topic current state   
-    tf::Quaternion current_quaternion;
+    tf::Quaternion current_quaternion( 0 , 0 , 0 , 1 );
     double mass; 
     double moment_inertia;
     double volumn;
@@ -77,14 +77,22 @@ active_main:
     {
         // Downlaod current force 
         lock_message_current_force.lock();
-        boost::qvm::A00( mat_force_thruster ) = message_current_force.data[ 0 ];
-        boost::qvm::A01( mat_force_thruster ) = message_current_force.data[ 1 ];
-        boost::qvm::A02( mat_force_thruster ) = message_current_force.data[ 2 ];
-        boost::qvm::A03( mat_force_thruster ) = message_current_force.data[ 3 ];
-        boost::qvm::A04( mat_force_thruster ) = message_current_force.data[ 4 ];
-        boost::qvm::A05( mat_force_thruster ) = message_current_force.data[ 5 ];
-        boost::qvm::A06( mat_force_thruster ) = message_current_force.data[ 6 ];
-        boost::qvm::A07( mat_force_thruster ) = message_current_force.data[ 7 ];
+        boost::qvm::A00( mat_force_thruster ) = message_current_force.data[ 0 ] *
+                zeabus::robot::gravity;
+        boost::qvm::A01( mat_force_thruster ) = message_current_force.data[ 1 ] *
+                zeabus::robot::gravity;
+        boost::qvm::A02( mat_force_thruster ) = message_current_force.data[ 2 ] *
+                zeabus::robot::gravity;
+        boost::qvm::A03( mat_force_thruster ) = message_current_force.data[ 3 ] *
+                zeabus::robot::gravity;
+        boost::qvm::A04( mat_force_thruster ) = message_current_force.data[ 4 ] *
+                zeabus::robot::gravity;
+        boost::qvm::A05( mat_force_thruster ) = message_current_force.data[ 5 ] *
+                zeabus::robot::gravity;
+        boost::qvm::A06( mat_force_thruster ) = message_current_force.data[ 6 ] *
+                zeabus::robot::gravity;
+        boost::qvm::A07( mat_force_thruster ) = message_current_force.data[ 7 ] *
+                zeabus::robot::gravity;
         lock_message_current_force.unlock();
 
         ch.calculate();
