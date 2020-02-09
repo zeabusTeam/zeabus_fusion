@@ -46,7 +46,7 @@ int main( int argv , char** argc )
     zeabus_utility::Float64Array8 message_current_force;
 
     // Part setup parameter variable for use in ros system
-    ph.param< std::string >( "file_map" , file_name , "qualification01.txt" );
+    ph.param< std::string >( "file_map" , file_name , "activate.txt" );
 
     ph.param< std::string >( "topic_current_force" , topic_current_force , "/control/current_force");
 
