@@ -245,7 +245,7 @@ void report( double* base_link_force , double* gravity_force , double* buoncy_fo
         double* viscosity_force , double* summation_force , double* acceleration ,
         double* current_velocity )
 {
-//    printf( "%s", ( zeabus::escape_code::screen_clear + zeabus::escape_code::screen_home ).c_str());
+//  printf( "%s", ( zeabus::escape_code::screen_clear + zeabus::escape_code::screen_home ).c_str());
     printf("Base Link  :         x|         y|         z|      roll|    pitch|       yaw\n" );
     printf("Thru Force :%10.3f %10.3f %10.3f %10.3f %10.3f %10.3f\n" , 
             base_link_force[0] , base_link_force[1] , base_link_force[2] , 

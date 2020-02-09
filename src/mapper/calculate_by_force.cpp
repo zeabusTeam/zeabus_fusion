@@ -39,7 +39,12 @@ void RobotForceHandle::setup_ptr_data( tf::Quaternion* ptr_current_quaternion ,
     this->ptr_vec_current_velocity = ptr_vec_current_velocity;
 }
 
-void RobotForceHandle::calculate()
+void RobotForceHandle::setup_viscosty( const boost::qvm::vec< double , 6 > vec_constant_viscosty )
+{
+    boost::qvm::assign( this->vec_constant_viscosty , vec_constant_viscosty );
+}
+
+void RobotForceHandle::calculate( const double diff_time )
 {
 #ifdef SHOW_DATA
     std::cout   << "CURRENT_FORCE  :\n" ;
@@ -113,5 +118,26 @@ void RobotForceHandle::calculate()
     std::cout   << "ROBOT FORCE    :\n";
     zeabus_boost::print( this->mat_force_robot );
 #endif // SHOW_ROBOT_FORCE
+
+    this->mat_force_sum = this->mat_force_viscosty +
+            this->mat_force_robot +
+            this->mat_force_gravity +
+            this->mat_force_buoncy;
+
+    this->vec_acceleration.a[0] = this->mat_force_sum.a[0][0] / this->mass;
+    this->vec_acceleration.a[1] = this->mat_force_sum.a[0][1] / this->mass;
+    this->vec_acceleration.a[2] = this->mat_force_sum.a[0][2] / this->mass;
+    this->vec_acceleration.a[3] = this->mat_force_sum.a[0][3] / this->moment_inertia;
+    this->vec_acceleration.a[4] = this->mat_force_sum.a[0][4] / this->moment_inertia;
+    this->vec_acceleration.a[5] = this->mat_force_sum.a[0][5] / this->moment_inertia;
+
+    *( this->ptr_vec_current_velocity ) += ( this->vec_acceleration * diff_time );
+
+#ifdef SHOW_ROBOT_FORCE
+    std::cout   << "ROBOT ACCEL    :\n";
+    zeabus_boost::print( this->vec_acceleration );
+    std::cout   << "NEW VELOCITY   :\n";
+    zeabus_boost::print( *( this->ptr_vec_current_velocity ) );
+#endif
 
 }

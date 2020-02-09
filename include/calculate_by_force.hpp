@@ -54,7 +54,7 @@ class RobotForceHandle
 
         void setup_viscosty( const boost::qvm::vec< double , 6 > vec_constant_viscosty );
 
-        void calculate();
+        void calculate( const double diff_time );
 
     protected:
         double weight;

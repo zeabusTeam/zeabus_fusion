@@ -32,6 +32,7 @@ int main( int argv , char** argc )
     std::string topic_current_force; // Use to collect std::string of input topic current force
     std::string topic_current_state; // Use to collect std::string of input topic current state   
     tf::Quaternion current_quaternion( 0 , 0 , 0 , 1 );
+    boost::qvm::vec< double , 6 > vec_constant_viscosty = { 20 , 30 , 40 , 30 , 40 , 25 } ;
     double mass; 
     double moment_inertia;
     double volumn;
@@ -58,6 +59,7 @@ int main( int argv , char** argc )
     ch.setup_ptr_data( &current_quaternion ,
             &mat_force_thruster , 
             &vec_current_veclocity );
+    ch.setup_viscosty( vec_current_veclocity );
 
     zeabus_ros::subscriber::BaseClass< zeabus_utility::Float64Array8 > listener_current_force( &nh,
             &message_current_force);
@@ -70,13 +72,15 @@ int main( int argv , char** argc )
 
     sth.spin( 10 );
     ros::Rate rate( 30 );
-
+    ros::Time time_stamp = ros::Time::now();
+    double diff_time = 0.0;
 active_main:
     printf( "Start active main part\n");
     while( ros::ok() )
     {
         // Downlaod current force 
         lock_message_current_force.lock();
+        diff_time = ( message_current_force.header.stamp - time_stamp ).toSec(); 
         boost::qvm::A00( mat_force_thruster ) = message_current_force.data[ 0 ] *
                 zeabus::robot::gravity;
         boost::qvm::A01( mat_force_thruster ) = message_current_force.data[ 1 ] *
@@ -95,7 +99,7 @@ active_main:
                 zeabus::robot::gravity;
         lock_message_current_force.unlock();
 
-        ch.calculate();
+        ch.calculate( diff_time );
         rate.sleep();
     }
 
