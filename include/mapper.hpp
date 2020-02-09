@@ -46,3 +46,5 @@
 #include    <boost/qvm/mat_access.hpp> 
 
 #include    <zeabus/file.hpp>
+
+#include    <calculate_by_force.hpp>

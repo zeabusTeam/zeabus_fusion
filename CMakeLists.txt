@@ -36,6 +36,7 @@ target_link_libraries( localize
 
 add_executable( visual
     src/mapper/mapper.cpp # Main file
+    src/mapper/calculate_by_force.cpp
 )
 target_link_libraries( visual 
     ${zeabus_library_LIBRARIES}
