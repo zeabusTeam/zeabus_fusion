@@ -7,8 +7,10 @@ find_package( catkin REQUIRED COMPONENTS
     nav_msgs
     sensor_msgs
     zeabus_utility
+    dynamic_reconfigure
 )
 
+find_package( Boost REQUIRED COMPONENTS )
 find_package( zeabus_library REQUIRED COMPONENTS )
 
 include_directories(
@@ -17,8 +19,13 @@ include_directories(
     "${PROJECT_SOURCE_DIR}/include"
 )
 
+generate_dynamic_reconfigure_options(
+    cfg/Visual.cfg
+)
+
 catkin_package(
-    CATKIN_DEPENDS roscpp
+    CATKIN_DEPENDS roscpp dynamic_reconfigure
+    DEPENDS Boost ${PROJECT_NAME}_gencfg zeabus_library
 )
 
 add_executable( localize 
@@ -37,6 +44,10 @@ target_link_libraries( localize
 add_executable( visual
     src/mapper/mapper.cpp # Main file
     src/mapper/calculate_by_force.cpp
+    src/mapper/mapper_reconfigure.cpp
+)
+add_dependencies( visual
+    ${PROJECT_NAME}_gencfg
 )
 target_link_libraries( visual 
     ${zeabus_library_LIBRARIES}

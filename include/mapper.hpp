@@ -50,3 +50,13 @@
 #include    <calculate_by_force.hpp>
 
 #include    <geometry_msgs/TransformStamped.h>
+
+#include    <mapper_reconfigure>
+
+extern double mass;
+extern double moment_inertia;
+extern double volumn;
+extern double viscosty[ 6 ];
+
+extern bool avaliable_new_parameter;
+extern std::mutex lock_dynamic_reconfigure;
