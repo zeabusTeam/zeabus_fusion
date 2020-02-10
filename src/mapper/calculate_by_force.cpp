@@ -42,6 +42,7 @@ void RobotForceHandle::setup_ptr_data( tf::Quaternion* ptr_current_quaternion ,
 void RobotForceHandle::setup_viscosty( const boost::qvm::vec< double , 6 > vec_constant_viscosty )
 {
     boost::qvm::assign( this->vec_constant_viscosty , vec_constant_viscosty );
+    this->vec_constant_viscosty *= -1.0;
 }
 
 void RobotForceHandle::calculate( const double diff_time )

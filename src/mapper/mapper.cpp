@@ -10,7 +10,7 @@
 // REFERENCE
 
 // MACRO SET
-#define SHOW_DATA // SHOW_DATA macro condition in calculate by force
+#define PRINT_RESULT
 
 // MACRO CONDITION
 
@@ -37,18 +37,26 @@ int main( int argv , char** argc )
     double moment_inertia;
     double volumn;
 
-    boost::qvm::vec< double , 6 > vec_current_veclocity;
-    vec_current_veclocity *= 0;
+    boost::qvm::vec< double , 6 > vec_current_velocity;
+    vec_current_velocity *= 0;
     boost::qvm::mat< double , 1 , 8 > mat_force_thruster;
     mat_force_thruster *= 0;
+    boost::qvm::vec< double , 6 > vec_previous_velocity;
+    vec_previous_velocity *= 0;
 
     std::mutex lock_message_current_force;
     zeabus_utility::Float64Array8 message_current_force;
 
+    geometry_msgs::TransformStamped message_transform;
+    message_transform.header.frame_id = "odom";
+    message_transform.child_frame_id = "base_link_visual";
+    message_transform.transform.rotation.z = 1;
+    message_transform.transform.translation;
+    tf::TransformBroadcaster broadcaster;
     // Part setup parameter variable for use in ros system
     ph.param< std::string >( "file_map" , file_name , "activate.txt" );
 
-    ph.param< std::string >( "topic_current_force" , topic_current_force , "/control/current_force");
+    ph.param< std::string >( "topic_current_force" , topic_current_force , "/control/force/current");
 
     ph.param< double >( "moment_inertia" , moment_inertia , 10 ); 
     ph.param< double >( "volumn" , volumn , 0.038192 ); // unit meter square
@@ -58,8 +66,8 @@ int main( int argv , char** argc )
     RobotForceHandle ch( mass , moment_inertia , volumn ); // calculate handle
     ch.setup_ptr_data( &current_quaternion ,
             &mat_force_thruster , 
-            &vec_current_veclocity );
-    ch.setup_viscosty( vec_current_veclocity );
+            &vec_current_velocity );
+    ch.setup_viscosty( vec_constant_viscosty );
 
     zeabus_ros::subscriber::BaseClass< zeabus_utility::Float64Array8 > listener_current_force( &nh,
             &message_current_force);
@@ -72,35 +80,91 @@ int main( int argv , char** argc )
 
     sth.spin( 10 );
     ros::Rate rate( 30 );
-    ros::Time time_stamp = ros::Time::now();
+    ros::Time time_stamp = ros::Time::now(); // use to know time know
+    ros::Time collect_stamp = time_stamp; // use to collect time of message current force
+    ros::Time previous_stamp; // use to save previous time to find now time
     double diff_time = 0.0;
+    tf::Quaternion temp_quaternion;
+
+loop_first_data:
+    printf( "Waiting for first data to start mission\n");
+    while( ros::ok() )
+    {
+        rate.sleep();
+        lock_message_current_force.lock();
+        if( collect_stamp < message_current_force.header.stamp )
+        {   
+            collect_stamp = message_current_force.header.stamp;
+        }   
+        lock_message_current_force.unlock();
+        if( collect_stamp != time_stamp )
+        {   
+            previous_stamp = ros::Time::now();
+            goto active_main;
+        } // Mean you ever get new data
+
+    }
+
 active_main:
     printf( "Start active main part\n");
     while( ros::ok() )
     {
+        rate.sleep();
+        time_stamp = ros::Time::now() ;
         // Downlaod current force 
         lock_message_current_force.lock();
-        diff_time = ( message_current_force.header.stamp - time_stamp ).toSec(); 
-        boost::qvm::A00( mat_force_thruster ) = message_current_force.data[ 0 ] *
-                zeabus::robot::gravity;
-        boost::qvm::A01( mat_force_thruster ) = message_current_force.data[ 1 ] *
-                zeabus::robot::gravity;
-        boost::qvm::A02( mat_force_thruster ) = message_current_force.data[ 2 ] *
-                zeabus::robot::gravity;
-        boost::qvm::A03( mat_force_thruster ) = message_current_force.data[ 3 ] *
-                zeabus::robot::gravity;
-        boost::qvm::A04( mat_force_thruster ) = message_current_force.data[ 4 ] *
-                zeabus::robot::gravity;
-        boost::qvm::A05( mat_force_thruster ) = message_current_force.data[ 5 ] *
-                zeabus::robot::gravity;
-        boost::qvm::A06( mat_force_thruster ) = message_current_force.data[ 6 ] *
-                zeabus::robot::gravity;
-        boost::qvm::A07( mat_force_thruster ) = message_current_force.data[ 7 ] *
-                zeabus::robot::gravity;
+        if( collect_stamp != message_current_force.header.stamp )
+        {
+            boost::qvm::A00( mat_force_thruster ) = message_current_force.data[ 0 ] *
+                    zeabus::robot::gravity;
+            boost::qvm::A01( mat_force_thruster ) = message_current_force.data[ 1 ] *
+                    zeabus::robot::gravity;
+            boost::qvm::A02( mat_force_thruster ) = message_current_force.data[ 2 ] *
+                    zeabus::robot::gravity;
+            boost::qvm::A03( mat_force_thruster ) = message_current_force.data[ 3 ] *
+                    zeabus::robot::gravity;
+            boost::qvm::A04( mat_force_thruster ) = message_current_force.data[ 4 ] *
+                    zeabus::robot::gravity;
+            boost::qvm::A05( mat_force_thruster ) = message_current_force.data[ 5 ] *
+                    zeabus::robot::gravity;
+            boost::qvm::A06( mat_force_thruster ) = message_current_force.data[ 6 ] *
+                    zeabus::robot::gravity;
+            boost::qvm::A07( mat_force_thruster ) = message_current_force.data[ 7 ] *
+                    zeabus::robot::gravity;
+            collect_stamp = message_current_force.header.stamp;
+        }
         lock_message_current_force.unlock();
 
+        diff_time = ( time_stamp - previous_stamp ).toSec();
         ch.calculate( diff_time );
-        rate.sleep();
+        // Now we have current data for use so I will find distance in robot frame
+        temp_quaternion = tf::Quaternion(
+            ( vec_current_velocity.a[ 0 ] + vec_previous_velocity.a[ 0 ] ) * diff_time / 2 ,
+            ( vec_current_velocity.a[ 1 ] + vec_previous_velocity.a[ 1 ] ) * diff_time / 2 ,
+            ( vec_current_velocity.a[ 2 ] + vec_previous_velocity.a[ 2 ] ) * diff_time / 2 ,
+            0 );
+#ifdef PRINT_RESULT
+        printf( "DISTANCE ROBOT : %8.3f %8.3f %8.3f\n" , temp_quaternion.x() ,
+                temp_quaternion.y() ,
+                temp_quaternion.z() );
+#endif // PRINT_RESULT
+        temp_quaternion = current_quaternion * temp_quaternion * current_quaternion.inverse();
+#ifdef PRINT_RESULT
+        printf( "DISTANCE ODOM  : %8.3f %8.3f %8.3f\n" , temp_quaternion.x() ,
+                temp_quaternion.y() ,
+                temp_quaternion.z() );
+#endif // PRINT_RESULT
+        message_transform.header.stamp = ros::Time::now();
+        message_transform.transform.translation.x += temp_quaternion.x();
+        message_transform.transform.translation.y += temp_quaternion.y();
+        message_transform.transform.translation.z += temp_quaternion.z();
+#ifdef PRINT_RESULT
+        printf( "DISTANCE ODOM  : %8.3f %8.3f %8.3f\n" , message_transform.transform.translation.x,
+                message_transform.transform.translation.y,
+                message_transform.transform.translation.z );
+#endif
+        broadcaster.sendTransform( message_transform );
+        previous_stamp = time_stamp;
     }
 
 exit_main:
