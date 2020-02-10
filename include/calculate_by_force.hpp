@@ -46,7 +46,9 @@ class RobotForceHandle
 {
 
     public:
-        RobotForceHandle( const double mass , const double moment_inertia , const double volumn );
+        RobotForceHandle();
+
+        void setup_constant( const double mass , const double moment_inertia , const double volumn );
 
         void setup_ptr_data( tf::Quaternion* ptr_current_quaternion ,
                 boost::qvm::mat< double , 1 , 8 >* ptr_mat_force_thruster,

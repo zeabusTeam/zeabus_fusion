@@ -20,7 +20,12 @@
 
 #include    <calculate_by_force.hpp>
 
-RobotForceHandle::RobotForceHandle( const double mass , 
+RobotForceHandle::RobotForceHandle()
+{
+    ;
+} // function constructor
+
+void RobotForceHandle::setup_constant( const double mass , 
         const double moment_inertia,
         const double volumn )
 {
@@ -28,7 +33,7 @@ RobotForceHandle::RobotForceHandle( const double mass ,
     this->buoncy = zeabus::robot::rho_water * zeabus::robot::gravity * volumn;
     this->mass = mass;
     this->moment_inertia = moment_inertia; 
-}
+} // function setup_constant
 
 void RobotForceHandle::setup_ptr_data( tf::Quaternion* ptr_current_quaternion ,
         boost::qvm::mat< double , 1 , 8 >* ptr_mat_force_thruster,
@@ -37,13 +42,13 @@ void RobotForceHandle::setup_ptr_data( tf::Quaternion* ptr_current_quaternion ,
     this->ptr_current_quaternion = ptr_current_quaternion;
     this->ptr_mat_force_thruster = ptr_mat_force_thruster;
     this->ptr_vec_current_velocity = ptr_vec_current_velocity;
-}
+} // function setup_ptr_data
 
 void RobotForceHandle::setup_viscosty( const boost::qvm::vec< double , 6 > vec_constant_viscosty )
 {
     boost::qvm::assign( this->vec_constant_viscosty , vec_constant_viscosty );
     this->vec_constant_viscosty *= -1.0;
-}
+} // function setup_viscosty
 
 void RobotForceHandle::calculate( const double diff_time )
 {
@@ -140,5 +145,4 @@ void RobotForceHandle::calculate( const double diff_time )
     std::cout   << "NEW VELOCITY   :\n";
     zeabus_boost::print( *( this->ptr_vec_current_velocity ) );
 #endif
-
-}
+} // function calculate

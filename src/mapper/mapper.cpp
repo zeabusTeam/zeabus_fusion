@@ -47,6 +47,9 @@ int main( int argv , char** argc )
     std::mutex lock_message_current_force;
     zeabus_utility::Float64Array8 message_current_force;
 
+    std::mutex lock_message_current_state;
+    nav_msgs::Odometry message_current_state;
+
     geometry_msgs::TransformStamped message_transform;
     message_transform.header.frame_id = "odom";
     message_transform.child_frame_id = "base_link_visual";
@@ -58,12 +61,15 @@ int main( int argv , char** argc )
 
     ph.param< std::string >( "topic_current_force" , topic_current_force , "/control/force/current");
 
+    ph.param< std::string >( "topic_current_state" , topic_current_state , "/localize/zeabus");
+
     ph.param< double >( "moment_inertia" , moment_inertia , 10 ); 
     ph.param< double >( "volumn" , volumn , 0.038192 ); // unit meter square
     ph.param< double >( "mass" , mass , 35.05 ); // unit kilogram
 
     // Part varible initial setup and have to use data
     RobotForceHandle ch( mass , moment_inertia , volumn ); // calculate handle
+    ch.setup_constant( mass , moment_inertia , volumn );
     ch.setup_ptr_data( &current_quaternion ,
             &mat_force_thruster , 
             &vec_current_velocity );
@@ -74,8 +80,14 @@ int main( int argv , char** argc )
     listener_current_force.setup_mutex_data( &lock_message_current_force );
     listener_current_force.setup_subscriber( topic_current_force , 1 );
 
+    zeabus_ros::subscriber::BaseClass< nav_msgs::Odometry > listener_current_state( &nh,
+            &message_current_state );
+    listener_current_state.setup_mutex_data( &lock_message_current_state );
+    listener_current_state.setup_subscriber( topic_current_state , 1 );
+
     // Part setup ros variable to activate ros system
     fh.open( zeabus_ros::get_full_path( "zeabus_localize" , "parameter/map" , file_name ) );
+
     ( void )sth.setup( &fh );
 
     sth.spin( 10 );
@@ -134,6 +146,13 @@ active_main:
             collect_stamp = message_current_force.header.stamp;
         }
         lock_message_current_force.unlock();
+        // Download current quaternion
+        lock_message_current_state.lock();
+        zeabus_ros::convert::geometry_quaternion::tf( &message_current_state.pose.pose.orientation,
+                &current_quaternion );
+        message_transform.transform.rotation = message_current_state.pose.pose.orientation;
+        message_transform.transform.translation.z = message_current_state.pose.pose.position.z;
+        lock_message_current_state.unlock();
 
         diff_time = ( time_stamp - previous_stamp ).toSec();
         ch.calculate( diff_time );
@@ -157,7 +176,6 @@ active_main:
         message_transform.header.stamp = ros::Time::now();
         message_transform.transform.translation.x += temp_quaternion.x();
         message_transform.transform.translation.y += temp_quaternion.y();
-        message_transform.transform.translation.z += temp_quaternion.z();
 #ifdef PRINT_RESULT
         printf( "DISTANCE ODOM  : %8.3f %8.3f %8.3f\n" , message_transform.transform.translation.x,
                 message_transform.transform.translation.y,
