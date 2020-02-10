@@ -16,6 +16,7 @@ find_package( zeabus_library REQUIRED COMPONENTS )
 include_directories(
     ${catkin_INCLUDE_DIRS}
     ${zeabus_library_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIRS}
     "${PROJECT_SOURCE_DIR}/include"
 )
 
@@ -51,6 +52,7 @@ add_dependencies( visual
 )
 target_link_libraries( visual 
     ${zeabus_library_LIBRARIES}
+    ${Boost_LIBRARIES}
     ${catkin_LIBRARIES}
 )
 

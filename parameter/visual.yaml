@@ -1,0 +1,33 @@
+!!python/object/new:dynamic_reconfigure.encoding.Config
+dictitems:
+  groups: !!python/object/new:dynamic_reconfigure.encoding.Config
+    dictitems:
+      groups: !!python/object/new:dynamic_reconfigure.encoding.Config
+        state: []
+      id: 0
+      mass: 35.5
+      moment_inertia: 100.0
+      name: Default
+      parameters: !!python/object/new:dynamic_reconfigure.encoding.Config
+        state: []
+      parent: 0
+      state: true
+      type: ''
+      viscosty_pitch: 0.0
+      viscosty_roll: 0.0
+      viscosty_x: 10.0
+      viscosty_y: 0.0
+      viscosty_yaw: 0.0
+      viscosty_z: 0.0
+      volumn: 30.0
+    state: []
+  mass: 35.5
+  moment_inertia: 100.0
+  viscosty_pitch: 0.0
+  viscosty_roll: 0.0
+  viscosty_x: 10.0
+  viscosty_y: 0.0
+  viscosty_yaw: 0.0
+  viscosty_z: 0.0
+  volumn: 30.0
+state: []

@@ -41,6 +41,8 @@
 
 #include    <zeabus/robot.hpp>
 
+#include    <zeabus/ros/dynamic_reconfigure.hpp>
+
 #include    <boost/qvm/vec_access.hpp>
 
 #include    <boost/qvm/mat_access.hpp> 
@@ -51,7 +53,7 @@
 
 #include    <geometry_msgs/TransformStamped.h>
 
-#include    <mapper_reconfigure>
+#include    <mapper_reconfigure.hpp>
 
 extern double mass;
 extern double moment_inertia;

@@ -25,17 +25,13 @@ int main( int argv , char** argc )
 
     node.spin();
 
-    // Part variable inital setup
+    // Part variable inital setup <==========================================================
     zeabus::FileCSV fh; // file module to collect mapper
     zeabus_ros::StaticTF sth; // static transformation handle
     std::string file_name; // file to collect map detail <visual map>
     std::string topic_current_force; // Use to collect std::string of input topic current force
     std::string topic_current_state; // Use to collect std::string of input topic current state   
     tf::Quaternion current_quaternion( 0 , 0 , 0 , 1 );
-    boost::qvm::vec< double , 6 > vec_constant_viscosty = { 20 , 30 , 40 , 30 , 40 , 25 } ;
-    double mass; 
-    double moment_inertia;
-    double volumn;
 
     boost::qvm::vec< double , 6 > vec_current_velocity;
     vec_current_velocity *= 0;
@@ -56,7 +52,7 @@ int main( int argv , char** argc )
     message_transform.transform.rotation.z = 1;
     message_transform.transform.translation;
     tf::TransformBroadcaster broadcaster;
-    // Part setup parameter variable for use in ros system
+    // Part setup parameter variable for use in ros system <=================================
     ph.param< std::string >( "file_map" , file_name , "activate.txt" );
 
     ph.param< std::string >( "topic_current_force" , topic_current_force , "/control/force/current");
@@ -67,13 +63,11 @@ int main( int argv , char** argc )
     ph.param< double >( "volumn" , volumn , 0.038192 ); // unit meter square
     ph.param< double >( "mass" , mass , 35.05 ); // unit kilogram
 
-    // Part varible initial setup and have to use data
-    RobotForceHandle ch( mass , moment_inertia , volumn ); // calculate handle
-    ch.setup_constant( mass , moment_inertia , volumn );
+    // Part varible initial setup and have to use data <=====================================
+    RobotForceHandle ch; // calculate handle
     ch.setup_ptr_data( &current_quaternion ,
             &mat_force_thruster , 
             &vec_current_velocity );
-    ch.setup_viscosty( vec_constant_viscosty );
 
     zeabus_ros::subscriber::BaseClass< zeabus_utility::Float64Array8 > listener_current_force( &nh,
             &message_current_force);
@@ -85,8 +79,33 @@ int main( int argv , char** argc )
     listener_current_state.setup_mutex_data( &lock_message_current_state );
     listener_current_state.setup_subscriber( topic_current_state , 1 );
 
-    // Part setup ros variable to activate ros system
+    // Part setup ros variable to activate ros system <======================================
     fh.open( zeabus_ros::get_full_path( "zeabus_localize" , "parameter/map" , file_name ) );
+
+    // Part setup dynamic roconfigure <======================================================
+    dynamic_reconfigure::Server< zeabus_localize::VisualConfig > server_reconfigure;
+    dynamic_reconfigure::Server< zeabus_localize::VisualConfig >::CallbackType
+            function_reconfigure;
+    function_reconfigure = boost::bind( &dynamic_reconfigure_callback , _1 , _2 );
+    server_reconfigure.setCallback( function_reconfigure );
+    zeabus_ros::DynamicReconfigure drh;
+    drh.load( "zeabus_localize" , "parameter" , "visual.yaml" , ros::this_node::getName() );
+
+    // Waiting first parameter for configure <===============================================
+    bool updated = false;
+    while( ros::ok() )
+    {
+        lock_dynamic_reconfigure.lock();
+        if( avaliable_new_parameter )
+        {
+            avaliable_new_parameter = false;
+            drh.dump( "zeabus_localize" , "parameter" , "visual.yaml" , ros::this_node::getName() );
+            dynamic_reconfigure_set_parameter( &ch );
+            updated = true;
+        }
+        lock_dynamic_reconfigure.unlock();
+        if( updated ) break;
+    }
 
     ( void )sth.setup( &fh );
 
@@ -121,6 +140,13 @@ active_main:
     printf( "Start active main part\n");
     while( ros::ok() )
     {
+        lock_dynamic_reconfigure.lock();
+        if( avaliable_new_parameter )
+        {
+            dynamic_reconfigure_set_parameter( &ch );
+            avaliable_new_parameter = false;
+        }
+        lock_dynamic_reconfigure.unlock();
         rate.sleep();
         time_stamp = ros::Time::now() ;
         // Downlaod current force 

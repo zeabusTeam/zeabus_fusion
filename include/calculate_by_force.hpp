@@ -42,6 +42,10 @@
 
 #include    <iostream>
 
+
+#ifndef _ZEABUS_LOCALIZE_CALCULATE_BY_FORCE_HPP__
+#define _ZEABUS_LOCALIZE_CALCULATE_BY_FORCE_HPP__
+
 class RobotForceHandle
 {
 
@@ -81,3 +85,5 @@ class RobotForceHandle
 
 
 };
+
+#endif 
