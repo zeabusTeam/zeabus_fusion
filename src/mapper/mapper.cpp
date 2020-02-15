@@ -16,6 +16,8 @@
 
 #include    <mapper.hpp>
 
+double bound_data( double value , double threshold );
+
 int main( int argv , char** argc )
 {
     zeabus_ros::Node node( argv , argc , "visual_map" );
@@ -49,8 +51,10 @@ int main( int argv , char** argc )
     geometry_msgs::TransformStamped message_transform;
     message_transform.header.frame_id = "odom";
     message_transform.child_frame_id = "base_link_visual";
-    message_transform.transform.rotation.z = 1;
-    message_transform.transform.translation;
+    message_transform.transform.rotation.w = 1;
+    message_transform.transform.translation.x = 0;
+    message_transform.transform.translation.y = 0;
+    message_transform.transform.translation.z = 0;
     tf::TransformBroadcaster broadcaster;
     // Part setup parameter variable for use in ros system <=================================
     ph.param< std::string >( "file_map" , file_name , "activate.txt" );
@@ -144,6 +148,7 @@ active_main:
         if( avaliable_new_parameter )
         {
             dynamic_reconfigure_set_parameter( &ch );
+            drh.dump( "zeabus_localize" , "parameter" , "visual.yaml" , ros::this_node::getName() );
             avaliable_new_parameter = false;
         }
         lock_dynamic_reconfigure.unlock();
@@ -177,7 +182,7 @@ active_main:
         zeabus_ros::convert::geometry_quaternion::tf( &message_current_state.pose.pose.orientation,
                 &current_quaternion );
         message_transform.transform.rotation = message_current_state.pose.pose.orientation;
-        message_transform.transform.translation.z = message_current_state.pose.pose.position.z;
+//        message_transform.transform.translation.z = message_current_state.pose.pose.position.z;
         lock_message_current_state.unlock();
 
         diff_time = ( time_stamp - previous_stamp ).toSec();
@@ -200,9 +205,11 @@ active_main:
                 temp_quaternion.z() );
 #endif // PRINT_RESULT
         message_transform.header.stamp = ros::Time::now();
-        message_transform.transform.translation.x += temp_quaternion.x();
-        message_transform.transform.translation.y += temp_quaternion.y();
+        message_transform.transform.translation.x += bound_data( temp_quaternion.x() , 0.005 );
+        message_transform.transform.translation.y += bound_data( temp_quaternion.y() , 0.005 );
+        message_transform.transform.translation.z += bound_data( temp_quaternion.z() , 0.005 );
 #ifdef PRINT_RESULT
+        printf( "THRESHOLD : 0.005\n" );
         printf( "DISTANCE ODOM  : %8.3f %8.3f %8.3f\n" , message_transform.transform.translation.x,
                 message_transform.transform.translation.y,
                 message_transform.transform.translation.z );
@@ -214,4 +221,18 @@ active_main:
 exit_main:
     return 0;
     
+}
+
+double bound_data( double value , double threshold )
+{
+    double answer = 0;
+    if( value > 0 )
+    {
+        if( value > threshold ) answer = value - threshold;
+    } // case value is position
+    else
+    {
+        if( value < -1.0*threshold ) answer = value + threshold;
+    }
+    return answer;
 }
