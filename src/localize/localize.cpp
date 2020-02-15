@@ -276,7 +276,7 @@ active_main:
         lock_localize_state.unlock();
                  
         message_localize_state.twist.twist.linear.z = ( previous_data - 
-                message_localize_state.pose.pose.position.z ) * 60 / 
+                message_localize_state.pose.pose.position.z ) / 
                 ( load_sensor_pressure.header.stamp - message_localize_state.header.stamp ).toSec();
 
         ah.updated( &load_sensor_imu.header.stamp , &load_sensor_imu.linear_acceleration );
