@@ -42,7 +42,7 @@ int main( int argv , char** argc )
             ned_to_enu_quaternion*enu_quaternion );
 
     tf::Quaternion odom_to_robot;
-    odom_to_robot.setRPY( 1.57 , 0 , -1.0 );
+    odom_to_robot.setRPY( 0 , 0 , -1.0 );
     tf::Quaternion vector( 10 , 0 , 0 , 0 );
     print_quaternion( "odom_to_robot" , odom_to_robot );
     print_quaternion( "inertia_to_body" , odom_to_robot * vector * odom_to_robot.inverse() );
