@@ -105,6 +105,7 @@ int main( int argv , char** argc )
     ros::Publisher publisher_localize = nh.advertise< nav_msgs::Odometry >( topic_output , 1 );
 
     // Part setup message for use in main loop
+    ros::Time time_stamp;
     std::mutex lock_localize_state;
     nav_msgs::Odometry message_localize_state;
     message_localize_state.pose.pose.orientation.w = 1;
@@ -275,12 +276,13 @@ active_main:
                 ( current_orientation * translation_pressure * current_orientation.inverse() ).z();
         lock_localize_state.unlock();
                  
-        message_localize_state.twist.twist.linear.z = ( previous_data - 
-                message_localize_state.pose.pose.position.z ) / 
-                ( load_sensor_pressure.header.stamp - message_localize_state.header.stamp ).toSec();
+        message_localize_state.twist.twist.linear.z = ( message_localize_state.pose.pose.position.z- 
+                previous_data ) / 
+//              ( load_sensor_pressure.header.stamp - message_localize_state.header.stamp ).toSec();
+                (time_stamp - message_localize_state.header.stamp ).toSec();
 
-        ah.updated( &load_sensor_imu.header.stamp , &load_sensor_imu.linear_acceleration );
-        ah.get_velocity( &message_localize_state.twist.twist.linear );
+//        ah.updated( &load_sensor_imu.header.stamp , &load_sensor_imu.linear_acceleration );
+//        ah.get_velocity( &message_localize_state.twist.twist.linear );
 
         utsh.updated( &message_localize_state.header.stamp );
 
@@ -304,6 +306,7 @@ active_main:
                 message_localize_state.child_frame_id + "_target" ) );
 
         publisher_localize.publish( message_localize_state );
+        time_stamp = message_localize_state.header.stamp;
         rate.sleep();
     } // main loop    
 
