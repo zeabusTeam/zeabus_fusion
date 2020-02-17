@@ -277,9 +277,9 @@ active_main:
         lock_localize_state.unlock();
                  
         message_localize_state.twist.twist.linear.z = ( message_localize_state.pose.pose.position.z- 
-                previous_data ) / 
+                previous_data ) * frequency; 
 //              ( load_sensor_pressure.header.stamp - message_localize_state.header.stamp ).toSec();
-                (time_stamp - message_localize_state.header.stamp ).toSec();
+//                (time_stamp - message_localize_state.header.stamp ).toSec();
 
 //        ah.updated( &load_sensor_imu.header.stamp , &load_sensor_imu.linear_acceleration );
 //        ah.get_velocity( &message_localize_state.twist.twist.linear );
