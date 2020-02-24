@@ -194,13 +194,13 @@ active_main:
 
         // prepare matrix of buoncy force
         std::memcpy( (void*) &buoncy_force.a[0][3] ,
-                (void*)boost::qvm::cross( buoncy_vector , zeabus::robot::distance_center_buoncy ).a,
+                (void*)boost::qvm::cross( buoncy_vector , zeabus::robot::vec_center_buoncy ).a,
                 sizeof( double ) * 3 ); 
         std::memcpy( (void*) buoncy_force.a[0] , (void*)buoncy_vector.a , sizeof( double )* 3 );
 
         // prepare matrix of gravity force
         std::memcpy( (void*) &gravity_force.a[0][3] , 
-                (void*)boost::qvm::cross( gravity_vector, zeabus::robot::distance_center_gravity).a,
+                (void*)boost::qvm::cross( gravity_vector, zeabus::robot::vec_center_gravity).a,
                 sizeof( double ) * 3 );
         std::memcpy( (void*) gravity_force.a[0] , (void*)gravity_vector.a , sizeof( double )* 3 );
 

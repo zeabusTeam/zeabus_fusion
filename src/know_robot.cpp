@@ -23,6 +23,8 @@
 
 #include    <boost/qvm/mat_access.hpp>
 
+#include    <zeabus/math/boost/print_data.hpp>
+
 #include    <iomanip>
 
 int main( int argv , char** argc )
@@ -154,4 +156,10 @@ int main( int argv , char** argc )
                 << std::setprecision( 3 ) << std::setw( 8 )
                 << boost::qvm::A75( zeabus::robot::direction_all ) << "\n";
 
+    std::cout   << "Learn about cross function\n";
+    std::cout   << "Use matrix represent cross\n";
+    zeabus_boost::print( zeabus::robot::mat_center_gravity * zeabus::robot::mat_force_gravity );
+    std::cout   << "Use corss of boost\n";
+    boost::qvm::vec< double , 3 > temp_gravity = { 0 , 0 , zeabus::robot::weight * -1.0 };
+    zeabus_boost::print( boost::qvm::cross( zeabus::robot::vec_center_gravity , temp_gravity ) );
 }

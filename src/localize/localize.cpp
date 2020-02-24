@@ -100,6 +100,9 @@ int main( int argv , char** argc )
             &message_sensor_pressure );
     listener_sensor_pressure.setup_mutex_data( &lock_sensor_pressure );
     listener_sensor_pressure.setup_subscriber( topic_pressure , 1 );
+    double buffer_velocity[5] = { 0 , 0 , 0 , 0 , 0 };
+    unsigned int point_buffer_velocity = 0;
+    double sum_velocity = 0;
 
     // Part setup publisher message for localize
     ros::Publisher publisher_localize = nh.advertise< nav_msgs::Odometry >( topic_output , 1 );
@@ -275,11 +278,15 @@ active_main:
         message_localize_state.pose.pose.position.z = load_sensor_pressure.data -
                 ( current_orientation * translation_pressure * current_orientation.inverse() ).z();
         lock_localize_state.unlock();
-                 
-        message_localize_state.twist.twist.linear.z = ( message_localize_state.pose.pose.position.z- 
+
+        sum_velocity -= buffer_velocity[ point_buffer_velocity ]; 
+        buffer_velocity[ point_buffer_velocity ] = ( message_localize_state.pose.pose.position.z- 
                 previous_data ) * frequency; 
-//              ( load_sensor_pressure.header.stamp - message_localize_state.header.stamp ).toSec();
-//                (time_stamp - message_localize_state.header.stamp ).toSec();
+        sum_velocity += buffer_velocity[ point_buffer_velocity ];
+        point_buffer_velocity = ( point_buffer_velocity  + 1) % 5;
+        message_localize_state.twist.twist.linear.z = sum_velocity / 5 ;
+//      message_localize_state.twist.twist.linear.z = ( message_localize_state.pose.pose.position.z- 
+//                previous_data ) * frequency; 
 
 //        ah.updated( &load_sensor_imu.header.stamp , &load_sensor_imu.linear_acceleration );
 //        ah.get_velocity( &message_localize_state.twist.twist.linear );

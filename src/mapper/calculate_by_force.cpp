@@ -76,14 +76,14 @@ void RobotForceHandle::calculate( const double diff_time )
     // Next we will prepare matrix of buoncy & gravity force
     std::memcpy( (void*) &this->mat_force_buoncy.a[0][3],
             (void*) boost::qvm::cross( this->vec_force_buoncy, 
-                    zeabus::robot::distance_center_buoncy ).a ,
+                    zeabus::robot::vec_center_buoncy ).a ,
             sizeof( double ) * 3 ); // save part moment force buoncy force 
     std::memcpy( (void*) this->mat_force_buoncy.a[0] , 
             (void*) this->vec_force_buoncy.a , 
             sizeof( double )* 3 ); // save part linear force by bouncy force
     std::memcpy( (void*) &this->mat_force_gravity.a[0][3] , 
             (void*)boost::qvm::cross( this->vec_force_gravity, 
-                    zeabus::robot::distance_center_gravity).a ,
+                    zeabus::robot::vec_center_gravity).a ,
             sizeof( double ) * 3 ); // save part moment force by gravity force
     std::memcpy( (void*) this->mat_force_gravity.a[0] , 
             (void*)this->vec_force_gravity.a , 
