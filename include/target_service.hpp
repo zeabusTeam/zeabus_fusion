@@ -85,10 +85,6 @@ class TargetService
         bool callback_absolute_pitch( zeabus_utility::SendFloat::Request& request,
                 zeabus_utility::SendFloat::Response& response );
 
-        ros::ServiceServer service_plane_xy;
-        bool callback_plane_xy( zeabus_utility::SendFloat::Request& request,
-                zeabus_utility::SendFloat::Response& response );
-
         ros::ServiceServer service_reset_all;
         bool callback_reset_all( zeabus_utility::SendBool::Request& request,
                 zeabus_utility::SendBool::Response& response );

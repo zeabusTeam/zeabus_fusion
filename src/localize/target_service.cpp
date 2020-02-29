@@ -56,8 +56,6 @@ void TargetService::setup_all_service()
             , &TargetService::callback_absolute_pitch , this );
     this->service_absolute_yaw = this->ptr_node_handle->advertiseService( "/target/absolute/yaw"
             , &TargetService::callback_absolute_yaw , this );
-    this->service_plane_xy = this->ptr_node_handle->advertiseService( "/target/velocity/plane_xy"
-            , &TargetService::callback_plane_xy , this );
     this->service_reset_all = this->ptr_node_handle->advertiseService( "/target/reset/all"
             , &TargetService::callback_reset_all , this );
 }
@@ -210,26 +208,6 @@ bool TargetService::callback_reset_all( zeabus_utility::SendBool::Request& reque
         this->ptr_lock_target->unlock();
         this->ptr_lock_current->unlock();
     }
-    return true;
-}
-
-// Part special command and have restrict
-bool TargetService::callback_plane_xy( zeabus_utility::SendFloat::Request& request,
-        zeabus_utility::SendFloat::Response& reponse )
-{
-    geometry_msgs::Vector3 temp_vector3;
-    tf::Quaternion current_quaternion;
-    zeabus_ros::convert::geometry_quaternion::tf( &(this->ptr_message_target_state->orientation ),
-            &current_quaternion );
-    tf::Matrix3x3( current_quaternion ).getRPY( temp_vector3.x , temp_vector3.y , temp_vector3.z );
-    temp_vector3.x = request.data * cos( temp_vector3.z );
-    temp_vector3.y = request.data * sin( temp_vector3.z );
-    this->ptr_lock_target->lock(); //acquire lock of target state
-    this->ptr_message_target_state->position.x = temp_vector3.x;
-    this->ptr_message_target_state->position.y = temp_vector3.y;
-    this->updated_target_state();
-    this->ptr_lock_target->unlock(); // release lock of target state
-
     return true;
 }
 
