@@ -13,7 +13,7 @@
 
 // MACRO CONDITION
 
-#include    <mapper_reconfigure.hpp>
+#include    <mapper/mapper_reconfigure.hpp>
 
 double mass = 0 ;         
 double moment_inertia = 0 ;

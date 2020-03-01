@@ -14,7 +14,7 @@
 
 // MACRO CONDITION
 
-#include    <mapper.hpp>
+#include    <mapper/mapper.hpp>
 
 double bound_data( double value , double threshold );
 

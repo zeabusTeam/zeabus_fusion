@@ -15,7 +15,7 @@
 
 // MACRO CONDITION
 
-#include    <calculate_linear_velocity.hpp>
+#include    <localize/calculate_linear_velocity.hpp>
 
 AccelerationHandle::AccelerationHandle( tf::Quaternion rotation )
 {

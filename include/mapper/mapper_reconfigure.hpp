@@ -19,7 +19,7 @@
 
 #include    <boost/qvm/vec_access.hpp>
 
-#include    <calculate_by_force.hpp>
+#include    <mapper/calculate_by_force.hpp>
 
 #include    <mutex>
 

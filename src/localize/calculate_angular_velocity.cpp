@@ -13,7 +13,7 @@
 
 // MACRO CONDITION
 
-#include    <calculate_angular_velocity.hpp>
+#include    <localize/calculate_angular_velocity.hpp>
 
 void calculate_angular_velocity( sensor_msgs::Imu* ptr_input ,
         geometry_msgs::Vector3* ptr_output )

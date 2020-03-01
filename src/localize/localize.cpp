@@ -41,13 +41,13 @@
 
 #include    <tf/transform_listener.h>
 
-#include    <target_service.hpp>
+#include    <localize/target_service.hpp>
 
-#include    <calculate_angular_velocity.hpp>
+#include    <localize/calculate_angular_velocity.hpp>
 
-#include    <calculate_linear_velocity.hpp>
+#include    <localize/calculate_linear_velocity.hpp>
 
-#include    <updated_target_state.hpp>
+#include    <localize/updated_target_state.hpp>
 
 const double timeout = 0.2;
 

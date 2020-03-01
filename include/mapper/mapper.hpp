@@ -49,11 +49,11 @@
 
 #include    <zeabus/file.hpp>
 
-#include    <calculate_by_force.hpp>
+#include    <mapper/calculate_by_force.hpp>
 
 #include    <geometry_msgs/TransformStamped.h>
 
-#include    <mapper_reconfigure.hpp>
+#include    <mapper/mapper_reconfigure.hpp>
 
 extern double mass;
 extern double moment_inertia;

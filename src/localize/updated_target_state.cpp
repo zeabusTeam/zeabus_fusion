@@ -13,7 +13,7 @@
 
 // MACRO CONDITION
 
-#include    <updated_target_state.hpp>
+#include    <localize/updated_target_state.hpp>
 
 UpdatedTargetState::UpdatedTargetState( ros::NodeHandle* ptr_node_handle )
 {
