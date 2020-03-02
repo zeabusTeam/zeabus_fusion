@@ -56,6 +56,15 @@ target_link_libraries( visual
     ${catkin_LIBRARIES}
 )
 
+add_executable( map
+    src/map/map.cpp # Main file
+)
+target_link_libraries( map 
+    ${zeabus_library_LIBRARIES}
+    ${Boost_LIBRARIES}
+    ${catkin_LIBRARIES}
+)
+
 add_executable( quaternion
     src/know_quaternion.cpp
 )
