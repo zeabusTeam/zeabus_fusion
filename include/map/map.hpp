@@ -35,4 +35,4 @@
 #include    <zeabus_utility/VisionResult.h>
 #include    <zeabus_utility/VisionResults.h>
 
-#include    <boost/array.hpp>
+#include    <geometry_msgs/Vector3Stamped.h>
