@@ -162,4 +162,6 @@ int main( int argv , char** argc )
     std::cout   << "Use corss of boost\n";
     boost::qvm::vec< double , 3 > temp_gravity = { 0 , 0 , zeabus::robot::weight * -1.0 };
     zeabus_boost::print( boost::qvm::cross( zeabus::robot::vec_center_gravity , temp_gravity ) );
+    std::cout   << "Inertial inverse\n";
+    zeabus_boost::print( zeabus::robot::mat_inertia_inverse );
 }
