@@ -65,6 +65,16 @@ target_link_libraries( map
     ${catkin_LIBRARIES}
 )
 
+add_executable( observer
+    src/observer/observer.cpp
+    src/observer/observer_bound_limit.cpp
+)
+target_link_libraries( observer
+    ${zeabus_library_LIBRARIES}
+    ${Boost_LIBRARIES}
+    ${catkin_LIBRARIES}
+)
+
 add_executable( quaternion
     src/know_quaternion.cpp
 )
