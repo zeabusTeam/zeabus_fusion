@@ -1,4 +1,4 @@
-// FILE			: obsever_parameter.cpp
+// FILE			: observer_parameter.cpp
 // AUTHOR		: K.Supasan
 // CREATE ON	: 2020, March 11 (UTC+0)
 // MAINTAINER	: K.Supasan
@@ -32,9 +32,9 @@ const std::string file_name = "default.csv";
 
 void load_parameter()
 {
-    zeabus::FileCSV_fh;
+    zeabus::FileCSV fh;
     fh.open( zeabus_ros::get_full_path( package_name , sub_directory , file_name ) );
-    zeabus::extract_csv_type_3( &fh , mat_force_observer.a , 
+    zeabus::extract_csv_type_3( &fh , &mat_force_observer.a[0][0] , 
             arr_viscosity_k.c_array(),
             arr_viscosity_c.c_array() );
     fh.close();
@@ -42,8 +42,9 @@ void load_parameter()
 
 void dump_parameter()
 {
-    zeabus::dump_csv_type_3( zeabus_ros::get_full_path( package_name , sub_directory , file_name ) 
-            mat_force_observer.a,
+    std::string temp = zeabus_ros::get_full_path( package_name , sub_directory , file_name ); 
+    zeabus::dump_csv_type_3( temp, 
+            &mat_force_observer.a[0][0],
             arr_viscosity_k.c_array(),
             arr_viscosity_c.c_array(),
             6
@@ -53,19 +54,9 @@ void dump_parameter()
 void active_parameter()
 {
 #ifdef _OPEN_VISION_
-        active_vision();
+    ;
 #endif    
 #ifdef _OPEN_LOCALIZE_
-        active_localize();
+    ;
 #endif
 }
-
-void active_vision()
-{
-    ;
-} // for part tune parameter or change parameter from vision data
-
-void active_localize()
-{
-    ;
-} // for part tune parameter or change parameter from localize < imu pressure >

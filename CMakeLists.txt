@@ -67,6 +67,11 @@ target_link_libraries( map
 
 add_executable( observer
     src/observer/observer.cpp
+    src/observer/observer_model.cpp
+    src/observer/observer_vision.cpp
+    src/observer/observer_integral.cpp
+    src/observer/observer_localize.cpp
+    src/observer/observer_parameter.cpp
     src/observer/observer_bound_limit.cpp
 )
 target_link_libraries( observer

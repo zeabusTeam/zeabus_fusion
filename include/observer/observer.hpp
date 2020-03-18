@@ -22,6 +22,7 @@
 #include    <zeabus/file.hpp> // Read file about parameter 
 #include    <zeabus/robot.hpp>
 #include    <zeabus/ros/node.hpp> // Activate other thread receive data in ros system
+#include    <zeabus/escape_code.hpp>
 #include    <zeabus/ros/path_file.hpp> // Find path file in ROS system
 #include    <zeabus/math/quaternion.hpp> // zeabus handle quaternion
 #include    <zeabus/math/boost/operations.hpp> // include concat function
@@ -46,5 +47,22 @@
 #include    <boost/qvm/vec_operations.hpp>
 #include    <boost/qvm/mat_operations.hpp>
 
-#include    <observer/observer_bound_limit.hpp>
+#include    <observer/observer_parameter.hpp>
+#include    <observer/observer_localize.hpp>
+#include    <observer/observer_vision.hpp>
 #include    <observer/observer_model.hpp>
+#include    <observer/observer_bound_limit.hpp>
+#include    <observer/observer_integral.hpp>
+
+extern nav_msgs::Odometry localize_data;
+extern nav_msgs::Odometry observer_data;
+extern nav_msgs::Odometry vision_data;
+extern ros::Publisher observer_publisher;
+extern boost::qvm::mat< double , 6 , 1 > mat_force_thruster;
+
+#ifndef _ZEABUS_LOCALIZE_OBSERVER_OBSERVER_HPP__
+#define _ZEABUS_LOCALIZE_OBSERVER_OBSERVER_HPP__
+unsigned int vision_stamp_handle( const ros::Time stamp );
+unsigned int localize_stamp_handle( const ros::Time stamp );
+void publish( const std::string message );
+#endif // _ZEABUS_LOCALIZE_OBSERVER_OBSERVER_HPP__

@@ -20,7 +20,6 @@ boost::qvm::mat< double , 6 , 1 > mat_force_gravity = { 0 , 0 , 0 , 0 , 0 , 0 };
 boost::qvm::mat< double , 6 , 1 > mat_force_buoncy = { 0 , 0 , 0 , 0 , 0 , 0 };
 boost::qvm::mat< double , 6 , 1 > mat_force_constant = { 0 , 0 , 0 , 0 , 0 , 0 };
 boost::qvm::mat< double , 6 , 1 > mat_force_viscosity = { 0 , 0 , 0 , 0 , 0 , 0 };
-boost::qvm::mat< >
 double roll = 0;
 double pitch = 0;
 double yaw = 0;
@@ -43,7 +42,7 @@ void active_model()
             mat_rotation_force_z * zeabus::robot::mat_force_buoncy ,
             zeabus::robot::mat_center_buoncy * 
                     mat_rotation_force_z *
-                    zeabus::robot::mat_center_buoncy );
+                    zeabus::robot::mat_force_buoncy );
 
     zeabus_boost::mat_concat( &mat_force_constant,
             mat_rotation_force_z * zeabus::robot::mat_force_constant,
@@ -63,7 +62,7 @@ void active_model()
     mat_acceleration = zeabus::robot::mat_inertia_inverse * mat_acceleration;
 }
 
-inline void calculate_viscosity()
+void calculate_viscosity()
 {
     boost::qvm::A00( mat_force_viscosity ) = viscosity( 0 );
     boost::qvm::A10( mat_force_viscosity ) = viscosity( 1 );
@@ -71,11 +70,9 @@ inline void calculate_viscosity()
     boost::qvm::A30( mat_force_viscosity ) = viscosity( 3 );
     boost::qvm::A40( mat_force_viscosity ) = viscosity( 4 );
     boost::qvm::A50( mat_force_viscosity ) = viscosity( 5 );
-    boost::qvm::A60( mat_force_viscosity ) = viscosity( 6 );
-    boost::qvm::A70( mat_force_viscosity ) = viscosity( 7 );
 }
 
-inline double viscosity( unsigned int index )
+double viscosity( unsigned int index )
 {
     return -1.0 * arr_viscosity_k[ index ] * 
             ( 1 - exp( -1.0 * arr_viscosity_c[index] * arr_robot_velocity[ index ] ) );

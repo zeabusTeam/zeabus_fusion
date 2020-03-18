@@ -139,7 +139,6 @@ active_main:
             {
                 if( it->child_frame_id == list_frame[ run ] )
                 {
-                    have_data = true;
                     if( it->stamp == list_stamp[ run ] )
                     {
                         ; // None to do anything 
@@ -161,7 +160,7 @@ active_main:
                             printf( "NODE MAP : %s\n" , temp_string.c_str() );
                             list_stamp[ run ] = ros::Time( 0 );
                         }
-                        // Move vector trans lation to base_link frame
+                        // Move vector translation to base_link frame
                         temp_vector3 = zeabus_ros::convert::geometry_vector3::tf( it->translation);
                         zeabus::math::inv_rotation( rotation_to_optical_frame , &temp_vector3 );
                         if( it->frame_id == "front_camera_optical" )
@@ -224,6 +223,7 @@ active_main:
                         publish_odometry.publish( message_odometry );
 #endif           
                     }
+                    have_data = true;
                     break;
                 }
                 else

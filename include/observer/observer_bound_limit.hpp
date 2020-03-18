@@ -18,10 +18,11 @@ extern const double global_min_z;
 extern const double global_diff_z;
 extern const double global_diff_z_half;
 extern const double global_active_observer;
+extern bool observer_status;
 
 #ifndef _ZEABUS_LOCALIZE_OBSERVER_OBSERVER_BOUND_LIMIT_HPP__
 #define _ZEABUS_LOCALIZE_OBSERVER_OBSERVER_BOUND_LIMIT_HPP__
-void bound_limit_parameter();
-void bound_limit_module();
-void bound_limit_depth();
+void report_bound_limit();
+void active_bound_limit();
+void active_bound_limit_depth();
 #endif // _ZEABUS_LOCALIZE_OBSERVER_OBSERVER_BOUND_LIMIT_HPP__

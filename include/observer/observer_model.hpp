@@ -26,6 +26,6 @@ extern double yaw;
 #define _CPE_PROJECT_ZEABUS_LOCALIZE_OBSERVER_OBSERVER_MODEL_HPP__
 void report_model();
 void active_model();
-inline void calculate_viscosity();
-inline double viscosity( unsigned int index );
+void calculate_viscosity();
+double viscosity( unsigned int index );
 #endif // _CPE_PROJECT_ZEABUS_LOCALIZE_OBSERVER_OBSERVER_MODEL_HPP__

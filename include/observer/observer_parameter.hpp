@@ -22,6 +22,4 @@ extern boost::array< double , 6 > arr_viscosity_c;
 void load_parameter();
 void dump_parameter();
 void active_parameter();
-void active_vision();
-void active_localize();
 #endif // _ZEABUS_LOCALIZE_OBSERVER_OBSERVER_PARAMETER_HPP__ 
