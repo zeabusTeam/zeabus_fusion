@@ -280,7 +280,7 @@ active_main:
         lock_localize_state.unlock();
 
         sum_velocity -= buffer_velocity[ point_buffer_velocity ]; 
-        buffer_velocity[ point_buffer_velocity ] = ( message_localize_state.pose.pose.position.z- 
+        buffer_velocity[ point_buffer_velocity ] = ( message_localize_state.pose.pose.position.z - 
                 previous_data ) * frequency; 
         sum_velocity += buffer_velocity[ point_buffer_velocity ];
         point_buffer_velocity = ( point_buffer_velocity  + 1) / 5;

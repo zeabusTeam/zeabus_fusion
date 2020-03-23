@@ -235,7 +235,11 @@ active_main:
             {
                 printf( "NODE MAP : Fatal don\'t know frame %s\n" , it->child_frame_id.c_str() );
             }
-        }
+            else
+            {
+                break;
+            } // condition to chosse only one send message
+        } // loop for check frame
     } // lopp active   
 
 exit_main:
