@@ -43,6 +43,8 @@
 
 #include    <localize/target_service.hpp>
 
+#include    <localize/state_service.hpp>
+
 #include    <localize/calculate_angular_velocity.hpp>
 
 #include    <localize/calculate_linear_velocity.hpp>
@@ -142,6 +144,12 @@ int main( int argv , char** argc )
             &( message_localize_state.pose.pose ),
             &lock_localize_state );
     target_service.setup_all_service();
+
+    // Part manage all service for set current position
+    StateService state_service( &nh );
+    state_service.setup_all_variable( &message_localize_state,
+            &lock_localize_state );
+    state_service.setup_all_service();
 
     // Part about updated target state by control type subscriber
     UpdatedTargetState utsh( &nh ); // Updated target state handle
