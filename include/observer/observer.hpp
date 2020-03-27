@@ -15,6 +15,7 @@
 
 #include    <cmath>
 #include    <mutex>
+#include    <vector>
 #include    <cstring>
 #include    <cstdlib>
 #include    <iostream>
@@ -27,6 +28,7 @@
 #include    <zeabus/math/quaternion.hpp> // zeabus handle quaternion
 #include    <zeabus/math/boost/operations.hpp> // include concat function
 #include    <zeabus/math/boost/print_data.hpp> // include print matrix and vec in Boost qvm
+#include    <zeabus/ros/convert/nav_odometry.hpp>
 #include    <zeabus/ros/subscriber/base_class.hpp> // include template about listen
 #include    <zeabus/ros/convert/geometry_quaternion.hpp>
 

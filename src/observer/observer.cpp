@@ -60,12 +60,12 @@ int main( int argv, char** argc )
     listen_current_state.setup_subscriber( topic_current_state , 1 );
 
     // setup part tf we use tf for manage about transfer data
-    static tf::TransformListener listener_tf;
+    static tf::TransformListener tf_listener;
     ros::Time vision_stamp = ros::Time::now();
     ros::Time localize_stamp = ros::Time::now();
     ros::Time force_stamp = ros::Time::now();
     ros::Time observer_stamp = ros::Time::now();
-    tf::StampedTransform temp_transform;
+    tf::StampedTransform tf_transform;
 
     // part variable use in main loop
     unsigned int mode = 0;
@@ -76,9 +76,17 @@ int main( int argv, char** argc )
     observer_data.header.frame_id = "odom";
     ros::Rate rate( 30 );
 
+    int tf_error = tf::NO_ERROR;
+    std::string tf_error_string;
+
+    reset_integral();
+
     while( ros::ok() )
     {
         rate.sleep();
+
+        observer_stamp = ros::Time::now(); // observer stamp is stamp time of message observer
+
         // Download message current force of thruster
         lock_message_current_force.lock();
         if( force_stamp != message_current_force.header.stamp )
@@ -101,8 +109,24 @@ int main( int argv, char** argc )
         }
         lock_message_current_state.unlock();
 
-        observer_stamp = ros::Time::now(); // observer stamp is stamp time of message observer
+        // Get vision stamp by look tf data because vision data only send when found
+        tf_error = tf_listener.getLatestCommonTime( "odom" ,
+                    "base_link_vision",
+                    vision_stamp,
+                    &tf_error_string );
+        if( tf_error != tf::NO_ERROR )
+        {
+            std::cout   << "MAIN OBSERVER : " << tf_error_string << "\n";
+            goto response_localize_data;
+        }
+        else
+        {
+            tf_listener.lookupTransform( "base_link_vision" , "odom" , vision_stamp,
+                    tf_transform );
+            zeabus_ros::convert::nav_odometry::tf( &tf_transform , &vision_data );
+        }
 
+response_vision_data:
         mode = vision_stamp_handle( vision_stamp );
         switch( mode )
         {
@@ -113,6 +137,8 @@ int main( int argv, char** argc )
             default:
                 break; 
         }
+
+response_localize_data:
         mode = localize_stamp_handle( localize_stamp );
         switch( mode )
         {

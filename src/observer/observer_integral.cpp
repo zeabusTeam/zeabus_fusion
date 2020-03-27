@@ -30,6 +30,7 @@ void reset_integral()
     mat_velocity *= 0;
     arr_robot_velocity.assign( 0 );
     arr_odom_linear_velocity.assign( 0 );
+    arr_odom_linear_acceleration.assign( 0 );
 }
 
 // Input of this function will have
