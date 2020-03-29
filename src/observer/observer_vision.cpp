@@ -29,7 +29,7 @@ void active_vision()
 {
     
     double temp;
-    vec_vision_data.push_back( DataRosVision( &vision_data ) );
+    vec_vision_data.push_back( DataRosVision( &vision_data , mat_force_thruster ) );
 
     switch( vec_vision_data.size() )
     {
@@ -68,6 +68,11 @@ void reset_vision()
 
 void check_buffer_vision()
 {
+    while( vec_vision_data.size() > 3 )
+    {
+        vec_vision_data.erase( vec_vision_data.begin() );
+    }
+
     while( vec_vision_data.size() > 0 )
     {
         if( (vision_data.header.stamp - vec_vision_data.at(0).stamp ).toSec() > limit_time_vision )

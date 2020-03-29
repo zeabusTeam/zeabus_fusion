@@ -36,6 +36,11 @@ void active_rotation()
     ;     
 } 
 
+void reset_rotation()
+{
+    ;
+}
+
 void active_z( )
 {
     if( ! b_start_active_z )
@@ -77,9 +82,4 @@ void reset_z()
     mean_z = 0;
     max_z = 0;
     min_z = 0;
-}
-
-void reset_rotation()
-{
-    ;
 }

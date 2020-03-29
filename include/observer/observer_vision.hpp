@@ -26,14 +26,17 @@ struct DataRosVision
     ros::Time stamp;
     tf::Vector3 pose;
     tf::Quaternion quaternion;
+    boost::qvm::mat< double , 6 , 1 > mat_force_thruster;
 
-    DataRosVision( const nav_msgs::Odometry* data )
+    DataRosVision( const nav_msgs::Odometry* data , 
+            const boost::qvm::mat< double , 6 , 1 > mat_force_thruster )
     {
         this->stamp = data->header.stamp;
         zeabus_ros::convert::geometry_quaternion::tf( data , &( this->quaternion ) );
         this->pose = tf::Vector3( data->pose.pose.position.x,
                 data->pose.pose.position.y,
                 data->pose.pose.position.z );
+        this->mat_force_thruster = mat_force_thruster;
     }
 };
 
