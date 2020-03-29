@@ -10,14 +10,14 @@
 // REFERENCE
 
 // MACRO SET
-#define _OPEN_ALL_
-//#define _OPEN_VISION_
-//#define _OPEN_LOCALIZE_
+//#define _TUNE_ALL_
+#define _TUNE_VISION_
+//#define _TUNE_LOCALIZE_
 
 // MACRO CONDITION
-#ifdef _OPEN_ALL_
-    #define _OPEN_VISION_
-    #define _OPEN_LOCALIZE_
+#ifdef _TUNE_ALL_
+    #define _TUNE_VISION_
+    #define _TUNE_LOCALIZE_
 #endif
 
 #include    <observer/observer.hpp>
@@ -53,10 +53,20 @@ void dump_parameter()
 
 void active_parameter()
 {
-#ifdef _OPEN_VISION_
-    ;
+#ifdef _TUNE_VISION_
+    if( b_config_model_vision )
+    {
+       ; 
+    }
 #endif    
-#ifdef _OPEN_LOCALIZE_
-    ;
+#ifdef _TUNE_LOCALIZE_
+    if( b_config_model_z_linear )
+    {
+        ;
+    }
+    if( b_config_model_rotation )
+    {
+        ;
+    }
 #endif
 }

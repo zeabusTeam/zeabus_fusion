@@ -16,7 +16,7 @@
 #include    <observer/observer.hpp>
 
 bool b_config_integral_vision = false;
-bool b_config_parameter_vision = false;
+bool b_config_model_vision = false;
 const double limit_time_vision = 1.0;
 
 tf::Vector3 vec_vision_velocity_1;
@@ -29,12 +29,12 @@ void active_vision()
 {
     
     double temp;
-    vec_vision_data.push_back( DataRosVision( &vision_data , mat_force_thruster ) );
+    vec_vision_data.push_back( DataRosVision( &vision_data ) );
 
     switch( vec_vision_data.size() )
     {
     case 3 : // can find acceleration
-        b_config_parameter_vision = true;
+        b_config_model_vision = true;
         temp = ( vec_vision_data[2].stamp - vec_vision_data[1].stamp ).toSec();
         vec_vision_velocity_2 = ( vec_vision_data[ 2 ].pose - vec_vision_data[ 1 ].pose ) / temp; 
         vec_vision_acceleration = ( vec_vision_velocity_2 - vec_vision_velocity_1 ) / temp;
@@ -44,7 +44,7 @@ void active_vision()
                 ( vec_vision_data[1].stamp - vec_vision_data[0].stamp ).toSec();
 
     case 1 : // can update position in integral vision part
-        b_config_parameter_vision = true; // because you will cal when have new datail
+        b_config_model_vision = true; // because you will cal when have new datail
         break;
 
     case 0 :
@@ -59,11 +59,12 @@ void active_vision()
 
 void reset_vision()
 {
-    b_config_parameter_vision = false;
+    b_config_model_vision = false;
     b_config_integral_vision = false;
     vec_vision_velocity_1.setValue( 0 , 0 , 0 );
     vec_vision_velocity_2.setValue( 0 , 0 , 0 );
     vec_vision_acceleration.setValue( 0 , 0 , 0 );
+    vec_vision_data.clear();
 }
 
 void check_buffer_vision()

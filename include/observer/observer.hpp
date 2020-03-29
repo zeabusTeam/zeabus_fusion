@@ -61,6 +61,7 @@ extern nav_msgs::Odometry observer_data;
 extern nav_msgs::Odometry vision_data;
 extern ros::Publisher observer_publisher;
 extern boost::qvm::mat< double , 6 , 1 > mat_force_thruster;
+extern tf::Quaternion current_quaternion;
 
 #ifndef _ZEABUS_LOCALIZE_OBSERVER_OBSERVER_HPP__
 #define _ZEABUS_LOCALIZE_OBSERVER_OBSERVER_HPP__

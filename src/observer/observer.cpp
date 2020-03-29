@@ -20,6 +20,7 @@ nav_msgs::Odometry observer_data;
 nav_msgs::Odometry localize_data;
 nav_msgs::Odometry vision_data;
 boost::qvm::mat< double , 6 , 1 > mat_force_thruster = { 0 , 0 , 0 , 0 , 0 , 0 };
+tf::Quaternion current_quaternion;
 
 int main( int argv, char** argc )
 {
@@ -144,6 +145,7 @@ response_localize_data:
         {
             case 2 :
                 reset_localize();
+                reset_buffer_model();
             case 1 :
                 active_localize();
             default:
@@ -153,7 +155,7 @@ response_localize_data:
         // go to part predict or tune parameter
         active_parameter();
         // after get parameter have to calculate and get acceleration
-        active_model();
+        active_model( observer_stamp );
         // Now we have get acceleration we can calculate now
         observer_diff = ( observer_stamp - observer_data.header.stamp ).toSec();
         localize_diff = ( observer_stamp - localize_stamp ).toSec();

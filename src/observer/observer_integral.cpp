@@ -21,7 +21,6 @@ boost::qvm::mat< double , 6 , 1 > mat_velocity;
 boost::array< double , 6 > arr_robot_velocity;
 boost::array< double , 3 > arr_odom_linear_velocity;
 boost::array< double , 3 > arr_odom_linear_acceleration;
-tf::Quaternion current_quaternion;
 
 void reset_integral()
 {
@@ -88,6 +87,7 @@ void active_integral( const double& observer_diff,
                 boost::qvm::A20( mat_acceleration ) * pow( observer_diff , 2 ) / 2;
     }
 
+    // Differential is on time because current quaternion will fix already use localize or estimate 
     if( b_config_integral_rotation )
     {
         b_config_integral_rotation = false;
