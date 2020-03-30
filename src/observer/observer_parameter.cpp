@@ -65,6 +65,55 @@ void config_parameter_on_vision()
                 temp_data.mat_force_constant +
                 temp_data.mat_force_thruster +
                 mat_force_observer;
+        double sum_x = boost::qvm::A00( temp_sum ) + 
+                viscosity( arr_viscosity_k[ 0 ] , arr_viscosity_c[ 0 ] , vec_vision_velocity_1.x() );
+        double sum_y = boost::qvm::A10( temp_sum ) +
+                viscosity( arr_viscosity_k[ 1 ] , arr_viscosity_c[ 1 ] , vec_vision_velocity_1.y() );
+        double sum_z = boost::qvm::A20( temp_sum ) +
+                viscosity( arr_viscosity_k[ 2 ] , arr_viscosity_c[ 2 ] , vec_vision_velocity_1.z() );
+
+        double accel_x = sum_x / boost::qvm::A00( zeabus::robot::mat_inertia );
+        double accel_y = sum_y / boost::qvm::A11( zeabus::robot::mat_inertia );
+        double accel_z = sum_z / boost::qvm::A22( zeabus::robot::mat_inertia );
+    
+        double new_k_x = arr_viscosity_k[ 0 ] - learning_rate * 
+                ( vec_vision_acceleration.x() - accel_x ) /
+                ( boost::qvm::A00( zeabus::robot::mat_inertia) ) *
+                ( 1 - exp( -1.0 * arr_viscosity_c[ 0 ] * vec_vision_velocity_1.x() ) );
+        double new_k_y = arr_viscosity_k[ 1 ] - learning_rate * 
+                ( vec_vision_acceleration.y() - accel_y ) /
+                ( boost::qvm::A11( zeabus::robot::mat_inertia) ) *
+                ( 1 - exp( -1.0 * arr_viscosity_c[ 1 ] * vec_vision_velocity_1.y() ) );
+        double new_k_z = arr_viscosity_k[ 2 ] - learning_rate * 
+                ( vec_vision_acceleration.z() - accel_z ) /
+                ( boost::qvm::A22( zeabus::robot::mat_inertia) ) *
+                ( 1 - exp( -1.0 * arr_viscosity_c[ 2 ] * vec_vision_velocity_1.z() ) );
+
+        double new_c_x = arr_viscosity_c[ 0 ] - learning_rate *
+                ( vec_vision_acceleration.x() - accel_x ) /
+                boost::qvm::A00( zeabus::robot::mat_inertia ) *
+                arr_viscosity_k[ 0 ] * vec_vision_velocity_1.x() * 
+                exp( -1.0 * arr_viscosity_c[ 0 ] * vec_vision_velocity_1.x() );
+        double new_c_y = arr_viscosity_c[ 2 ] - learning_rate *
+                ( vec_vision_acceleration.y() - accel_y ) /
+                boost::qvm::A11( zeabus::robot::mat_inertia ) *
+                arr_viscosity_k[ 1 ] * vec_vision_velocity_1.y() * 
+                exp( -1.0 * arr_viscosity_c[ 1 ] * vec_vision_velocity_1.y() );
+        double new_c_z = arr_viscosity_c[ 2 ] - learning_rate *
+                ( vec_vision_acceleration.z() - accel_z ) /
+                boost::qvm::A22( zeabus::robot::mat_inertia ) *
+                arr_viscosity_k[ 2 ] * vec_vision_velocity_1.z() * 
+                exp( -1.0 * arr_viscosity_c[ 2 ] * vec_vision_velocity_1.z() );
+
+        double new_observer_force_x = boost::qvm::A00( mat_force_observer ) - learning_rate *
+                ( vec_vision_acceleration.x() - accel_x ) / 
+                boost::qvm::A00( zeabus::robot::mat_inertia );
+        double new_observer_force_y = boost::qvm::A10( mat_force_observer ) - learning_rate *
+                ( vec_vision_acceleration.y() - accel_y ) / 
+                boost::qvm::A11( zeabus::robot::mat_inertia );
+        double new_observer_force_z = boost::qvm::A20( mat_force_observer ) - learning_rate *
+                ( vec_vision_acceleration.z() - accel_z ) / 
+                boost::qvm::A22( zeabus::robot::mat_inertia );
     }
     else
     {
