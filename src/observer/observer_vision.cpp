@@ -44,9 +44,15 @@ void active_vision()
                 ( vec_vision_data[1].stamp - vec_vision_data[0].stamp ).toSec();
 
     case 1 : // can update position in integral vision part
-        b_config_model_vision = true; // because you will cal when have new datail
+        if( ! reupdate_position( vision_data ) )
+        {
+            b_config_model_vision = true; // because you will cal when have new datail
+        }
+        else
+        {
+            ; // you update position in middle data, not last data!
+        }
         break;
-
     case 0 :
         std::cout   << "VISION OBSERVER : Don't have data in buffer!!!\n";
         break;
