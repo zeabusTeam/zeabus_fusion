@@ -119,7 +119,7 @@ void check_buffer_model( const ros::Time& minimum_time )
 void reset_buffer_model()
 {
     vec_model_data.clear(); 
-}
+} // function reset_buffer_model
 
 bool search_buffer_model( const ros::Time& target_time , DataObserverModel* ptr_data )
 {
@@ -137,4 +137,4 @@ bool search_buffer_model( const ros::Time& target_time , DataObserverModel* ptr_
         std::cout   << "MODEL OBSERVER : Warning don't have data for " << target_time << "\n";  
     }
     return have_data;
-}
+} // function search_buffer_model

@@ -55,6 +55,8 @@ struct DataObserverModel
         this->stamp = stamp;
         this->quaternion = quaternion;
     }
+
+    DataObserverModel(){};
 }; 
 extern std::vector< DataObserverModel > vec_model_data;
 
@@ -66,5 +68,6 @@ void calculate_viscosity();
 inline double viscosity( const unsigned int index );
 void check_buffer_model( const ros::Time& minimum_time );
 void reset_buffer_model();
-bool serach_buffer_model( const ros::Time& target_time , DataObserverModel* ptr_data );
+bool search_buffer_model( const ros::Time& target_time , DataObserverModel* ptr_data );
+// return true in case have data in buffer
 #endif // _CPE_PROJECT_ZEABUS_LOCALIZE_OBSERVER_OBSERVER_MODEL_HPP__

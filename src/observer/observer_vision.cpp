@@ -30,7 +30,7 @@ void active_vision()
     static tf::Transformer tf_transform; 
     double temp;
     vec_vision_data.push_back( DataRosVision( &vision_data ) );
-
+    check_buffer_vision();
     switch( vec_vision_data.size() )
     {
     case 3 : // can find acceleration
