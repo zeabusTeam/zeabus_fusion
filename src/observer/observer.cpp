@@ -156,6 +156,9 @@ response_localize_data:
                 break;
         }
         // Finish receive data
+        // current quaternion is quaternoin (orientation) of previous data
+        zeabus_ros::convert::geometry_quaternion::tf( &observer_data.pose.pose.orientation,
+                &current_quaternion );
         // go to part predict or tune parameter
         active_parameter();
         // after get parameter have to calculate and get acceleration

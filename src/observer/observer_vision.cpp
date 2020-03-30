@@ -38,7 +38,6 @@ void active_vision()
         temp = ( vec_vision_data[2].stamp - vec_vision_data[1].stamp ).toSec();
         vec_vision_velocity_2 = ( vec_vision_data[ 2 ].pose - vec_vision_data[ 1 ].pose ) / temp; 
         vec_vision_acceleration = ( vec_vision_velocity_2 - vec_vision_velocity_1 ) / temp;
-
     case 2 : // can find velocity in odom frame
         vec_vision_velocity_1 = ( vec_vision_data[ 1 ].pose - vec_vision_data[ 0 ].pose ) / 
                 ( vec_vision_data[1].stamp - vec_vision_data[0].stamp ).toSec();
