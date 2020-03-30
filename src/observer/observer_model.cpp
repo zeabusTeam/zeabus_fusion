@@ -24,7 +24,6 @@ double roll = 0;
 double pitch = 0;
 double yaw = 0;
 
-const double time_limit_buffer = 2; // unit second
 std::vector< DataObserverModel > vec_model_data;
 
 void active_model( const ros::Time& current_time )
@@ -73,7 +72,7 @@ void active_model( const ros::Time& current_time )
             current_quaternion,
             current_time ) );
 
-    check_buffer_model( current_time - ros::Duration( time_limit_buffer ) );
+    check_buffer_model( current_time - ros::Duration( global_time_limit_buffer ) );
 }
 
 void calculate_viscosity()

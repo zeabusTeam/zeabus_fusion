@@ -63,9 +63,14 @@ extern ros::Publisher observer_publisher;
 extern boost::qvm::mat< double , 6 , 1 > mat_force_thruster;
 extern tf::Quaternion current_quaternion;
 
+extern const double global_time_limit_buffer; 
+extern std::vector< nav_msgs::Odometry > vec_observer_data;
+
 #ifndef _ZEABUS_LOCALIZE_OBSERVER_OBSERVER_HPP__
 #define _ZEABUS_LOCALIZE_OBSERVER_OBSERVER_HPP__
 unsigned int vision_stamp_handle( const ros::Time stamp );
 unsigned int localize_stamp_handle( const ros::Time stamp );
 void publish( const std::string message );
+bool reupdate_position( const nav_msgs::Odometry& vision_data );
+void check_buffer_observer( const ros::Time& minimum_time );
 #endif // _ZEABUS_LOCALIZE_OBSERVER_OBSERVER_HPP__

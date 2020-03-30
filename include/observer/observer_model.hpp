@@ -22,8 +22,6 @@ extern double roll;
 extern double pitch;
 extern double yaw;
 
-extern const double time_limit_buffer;
-
 struct DataObserverModel
 {
     boost::qvm::mat< double , 6 , 1 > mat_acceleration; // output predict use to find cost value

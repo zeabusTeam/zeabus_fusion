@@ -27,7 +27,7 @@ std::vector< DataRosVision > vec_vision_data;
 
 void active_vision()
 {
-    
+    static tf::Transformer tf_transform; 
     double temp;
     vec_vision_data.push_back( DataRosVision( &vision_data ) );
 

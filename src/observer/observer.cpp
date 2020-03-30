@@ -22,6 +22,9 @@ nav_msgs::Odometry vision_data;
 boost::qvm::mat< double , 6 , 1 > mat_force_thruster = { 0 , 0 , 0 , 0 , 0 , 0 };
 tf::Quaternion current_quaternion;
 
+const double global_time_limit_buffer = 2; // unit second
+std::vector< nav_msgs::Odometry > vec_observer_data;
+
 int main( int argv, char** argc )
 {
     zeabus_ros::Node node( argv , argc , "observer" );
@@ -146,6 +149,7 @@ response_localize_data:
             case 2 :
                 reset_localize();
                 reset_buffer_model();
+                vec_observer_data.clear();
             case 1 :
                 active_localize();
             default:
@@ -171,6 +175,64 @@ exit_main:
     ros::shutdown();
     node.join();
     return 0;
+}
+
+bool reupdate_position( const nav_msgs::Odometry& vision_data )
+{
+    bool have_reupdate = false;
+    for( auto it = vec_observer_data.begin() + 1 ; it != vec_observer_data.end() ; it++ )
+    {
+        // I have start at index 1 because we have to use two data for integral
+        if( it->header.stamp > vision_data.header.stamp )
+        {
+            have_reupdate = true;
+            // start part reupdate data instanly
+            double diff_origin = ( it->header.stamp - ( it - 1 )->header.stamp ).toSec();
+            double diff_newer = ( ( it->header.stamp ) - vision_data.header.stamp ).toSec();
+            double time_ratio = diff_newer / diff_origin;
+            // equation d_p = x_2_o - x_2_n
+            //          d_p = x_2_o - ( x_1_n + ( x_2_o - x_1_o ) / d_t_o * d_t_n )
+            double diff_x = it->pose.pose.position.x - 
+                    vision_data.pose.pose.position.x -
+                    (it->pose.pose.position.x - (it-1)->pose.pose.position.x ) * time_ratio; 
+
+            double diff_y = it->pose.pose.position.y - 
+                    vision_data.pose.pose.position.y -
+                    (it->pose.pose.position.y - (it-1)->pose.pose.position.y ) * time_ratio;
+
+            for( auto sub_it = it ; sub_it != vec_observer_data.end() ; sub_it++ )
+            {
+                sub_it->pose.pose.position.x -= diff_x;
+                sub_it->pose.pose.position.y -= diff_y;
+            }
+            // can deletate because past data don't important to collect them
+            // Delete will help you to filter time search
+            // But this vector have time only 2 second? I desire that.
+            // Don't worry time to access data
+            vec_observer_data.erase( vec_observer_data.begin() , it );
+            break; // after update mean you run overdata
+        } // case (it--)->header.stamp < vision_data.header.stamp < it->header.stamp
+        else
+        {
+            ;
+        } 
+    }
+    return have_reupdate;
+} // return true in case have to reupdate data and false in case that is last data in buffer
+
+void check_buffer_observer( const ros::Time& minimum_time )
+{
+    while( vec_observer_data.size() > 0 )
+    {
+        if( vec_observer_data.cbegin()->header.stamp < minimum_time )
+        {
+            vec_observer_data.erase( vec_observer_data.begin() );
+        }
+        else
+        {
+            break;
+        }
+    }
 }
 
 unsigned int vision_stamp_handle( const ros::Time stamp )
