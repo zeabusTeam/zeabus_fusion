@@ -45,7 +45,7 @@ void active_vision()
     case 1 : // can update position in integral vision part
         if( ! reupdate_position( vision_data ) )
         {
-            b_config_model_vision = true; // because you will cal when have new datail
+            b_config_model_vision = true; // because you will cal when have new data
         }
         else
         {

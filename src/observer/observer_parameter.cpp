@@ -13,6 +13,7 @@
 //#define _TUNE_ALL_
 #define _TUNE_VISION_
 //#define _TUNE_LOCALIZE_
+#define _PRINT_TUNE_VISION_
 
 // MACRO CONDITION
 #ifdef _TUNE_ALL_
@@ -65,6 +66,10 @@ void config_parameter_on_vision()
                 temp_data.mat_force_constant +
                 temp_data.mat_force_thruster +
                 mat_force_observer;
+        // Data before use to calculate have to base link frame
+        zeabus::math::rotation( temp_data.quaternion , &vec_vision_velocity_1 );
+        zeabus::math::rotation( temp_data.quaternion , &vec_vision_acceleration );
+        // Don't worry to send ptr data because in each loop will calculate again every loop
         double sum_x = boost::qvm::A00( temp_sum ) + 
                 viscosity( arr_viscosity_k[ 0 ] , arr_viscosity_c[ 0 ] , vec_vision_velocity_1.x() );
         double sum_y = boost::qvm::A10( temp_sum ) +
@@ -114,6 +119,30 @@ void config_parameter_on_vision()
         double new_observer_force_z = boost::qvm::A20( mat_force_observer ) - learning_rate *
                 ( vec_vision_acceleration.z() - accel_z ) / 
                 boost::qvm::A22( zeabus::robot::mat_inertia );
+
+#ifdef _PRINT_TUNE_VISION_
+        printf( "------------- TUNE OBSERVER PART VISION --------------------------\n" );
+        printf( "k_constant :%7.2f%7.2f%7.2f to%7.2f%7.2f%7.2f\n" , 
+                arr_viscosity_k[ 0 ], arr_viscosity_k[ 1 ], arr_viscosity_k[ 2 ],
+                new_k_x , new_k_y , new_k_z );
+        printf( "c_constant :%7.2f%7.2f%7.2f to%7.2f%7.2f%7.2f\n" , 
+                arr_viscosity_c[ 0 ], arr_viscosity_c[ 1 ], arr_viscosity_c[ 2 ],
+                new_c_x , new_c_y , new_c_z );
+        printf( "f_constant :%10.2f%10.2f%10.2f to%10.2f%10.2f%10.2f\n\n" ,
+                boost::qvm::A00( mat_force_observer ) , 
+                boost::qvm::A10( mat_force_observer ) ,
+                boost::qvm::A20( mat_force_observer ) ,
+                new_observer_force_x , new_observer_force_y , new_observer_force_z );
+#endif // _PRINT_TUNE_VISION_
+        arr_viscosity_c[ 0 ] = new_c_x;
+        arr_viscosity_c[ 1 ] = new_c_y;
+        arr_viscosity_c[ 2 ] = new_c_z;
+        arr_viscosity_k[ 0 ] = new_k_x;
+        arr_viscosity_k[ 1 ] = new_k_y;
+        arr_viscosity_k[ 2 ] = new_k_z;
+        boost::qvm::A00( mat_force_observer ) = new_observer_force_x;
+        boost::qvm::A10( mat_force_observer ) = new_observer_force_y;
+        boost::qvm::A20( mat_force_observer ) = new_observer_force_z;
     }
     else
     {
@@ -124,7 +153,7 @@ void config_parameter_on_vision()
 
 void config_parameter_on_localize_angular()
 {
-
+    ;
 } // config_parameter_on_localize_angular
 
 void active_parameter()
