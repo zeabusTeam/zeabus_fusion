@@ -65,11 +65,14 @@ int main( int argv, char** argc )
 
     // setup part tf we use tf for manage about transfer data
     static tf::TransformListener tf_listener;
+    static tf::TransformBroadcaster tf_broadcaster;
     ros::Time vision_stamp = ros::Time::now();
     ros::Time localize_stamp = ros::Time::now();
     ros::Time force_stamp = ros::Time::now();
     ros::Time observer_stamp = ros::Time::now();
     tf::StampedTransform tf_transform;
+    ros::Publisher publisher_observer = nh.advertise< nav_msgs::Odometry >( 
+            "/localize/zeabus_observer" , 1 );
 
     // part variable use in main loop
     unsigned int mode = 0;
@@ -120,7 +123,7 @@ int main( int argv, char** argc )
                     &tf_error_string );
         if( tf_error != tf::NO_ERROR )
         {
-            std::cout   << "MAIN OBSERVER : " << tf_error_string << "\n";
+            std::cout   << "MAIN OBSERVER : error listen vision data\n";
             goto response_localize_data;
         }
         else
@@ -179,6 +182,8 @@ response_localize_data:
 
         // Last time after we have to do sequence next we publish data in ros system
         observer_data.header.stamp = observer_stamp;
+        zeabus_ros::convert::nav_odometry::tf( &observer_data , &tf_transform );
+        tf_broadcaster.sendTransform( tf_transform );
         // End loop 
     } // main loop
 
@@ -261,7 +266,7 @@ unsigned int vision_stamp_handle( const ros::Time stamp )
         {
             std::cout   << zeabus::escape_code::bold_yellow << "MAIN OBSERVER : "
                         << zeabus::escape_code::normal_white 
-                        << "Reverse time vision receive\n";
+                        << "reset time vision receive\n";
             state = 2;
         }
         else
@@ -283,7 +288,7 @@ unsigned int localize_stamp_handle( const ros::Time stamp )
         {
             std::cout   << zeabus::escape_code::bold_yellow << "MAIN OBSERVER : "
                         << zeabus::escape_code::normal_white 
-                        << "Reverse time localize receive\n";
+                        << "reset time localize receive\n";
             state = 2;
         }
         else
