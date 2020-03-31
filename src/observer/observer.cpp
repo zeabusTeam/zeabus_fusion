@@ -43,6 +43,11 @@ int main( int argv, char** argc )
             topic_current_state,
             "/localize/zeabus" );
 
+    std::string topic_current_vision;
+    ph.param< std::string >( "topic_current_vision" , 
+            topic_current_vision,
+            "/localize/vision" );
+
     std::string frame_child_observer = "base_link_observer";
     std::string frame_parent = "odom";
     std::string frame_child_vision = "base_link_vision";
@@ -55,13 +60,20 @@ int main( int argv, char** argc )
             &message_current_force );
     listen_current_force.setup_mutex_data( &lock_message_current_force );
     listen_current_force.setup_subscriber( topic_current_force , 1 );
-
+    // setup part listen current state
     std::mutex lock_message_current_state;
     nav_msgs::Odometry message_current_state;
     zeabus_ros::subscriber::BaseClass< nav_msgs::Odometry > listen_current_state( &nh,
             &message_current_state );
     listen_current_state.setup_mutex_data( &lock_message_current_state );
     listen_current_state.setup_subscriber( topic_current_state , 1 );
+    // setup part listen vision data instead use tf
+    std::mutex lock_message_current_vision;
+    nav_msgs::Odometry message_current_vision;
+    zeabus_ros::subscriber::BaseClass< nav_msgs::Odometry > listen_current_vision( &nh,
+            &message_current_vision );
+    listen_current_vision.setup_mutex_data( &lock_message_current_vision );
+    listen_current_vision.setup_subscriber( topic_current_vision , 1 );
 
     // setup part tf we use tf for manage about transfer data
     static tf::TransformListener tf_listener;
@@ -107,7 +119,7 @@ int main( int argv, char** argc )
         }
         lock_message_current_force.unlock();
 
-        // Download message current state of thruster
+        // Download message current state
         lock_message_current_state.lock();
         if( localize_stamp != message_current_state.header.stamp )
         {
@@ -116,15 +128,24 @@ int main( int argv, char** argc )
         }
         lock_message_current_state.unlock();
 
-        // Get vision stamp by look tf data because vision data only send when found
-        tf_error = tf_listener.getLatestCommonTime( "odom" ,
-                    "base_link_vision",
-                    vision_stamp,
-                    &tf_error_string );
-        if( tf_error != tf::NO_ERROR )
+        // Download message current vision 
+        lock_message_current_vision.lock();
+        if( vision_stamp != message_current_vision.header.stamp )
         {
-            goto response_localize_data;
+            vision_stamp = message_current_vision.header.stamp;
+            vision_data = message_current_vision;
         }
+        lock_message_current_vision.unlock();
+
+        // Get vision stamp by look tf data because vision data only send when found
+//      tf_error = tf_listener.getLatestCommonTime( "odom" ,
+//                  "base_link_vision",
+//                  vision_stamp,
+//                  &tf_error_string );
+//      if( tf_error != tf::NO_ERROR )
+//      {
+//          goto response_localize_data;
+//      }
 
 response_vision_data:
         mode = vision_stamp_handle( vision_stamp );
@@ -133,14 +154,14 @@ response_vision_data:
             case 2 :
                 reset_vision(); 
             case 1 :
-                tf_listener.lookupTransform( "base_link_vision" , "odom" , vision_stamp,
-                        tf_transform );
-                std::cout   << "At time " << vision_stamp << " Get data position is " 
+//              tf_listener.lookupTransform( "base_link_vision" , "odom" , vision_stamp,
+//                      tf_transform );
+//              std::cout   << "At time " << vision_stamp << " Get data position is " 
 //                          << vision_data.pose.pose.position.x << " " 
 //                          << vision_data.pose.pose.position.y << "\n";
-                            << tf_transform.getOrigin().x() << " "
-                            << tf_transform.getOrigin().y() << "\n";
-                zeabus_ros::convert::nav_odometry::tf( &tf_transform , &vision_data );
+//                          << tf_transform.getOrigin().x() << " "
+//                          << tf_transform.getOrigin().y() << "\n";
+//              zeabus_ros::convert::nav_odometry::tf( &tf_transform , &vision_data );
                 active_vision();
             default:
                 break; 
@@ -282,7 +303,7 @@ void check_buffer_observer( const ros::Time& minimum_time )
 
 unsigned int vision_stamp_handle( const ros::Time stamp )
 {
-    static ros::Time save_stamp = ros::Time::now();
+    static ros::Time save_stamp = stamp;
     unsigned int state = 0;
     if( save_stamp != stamp )
     {
