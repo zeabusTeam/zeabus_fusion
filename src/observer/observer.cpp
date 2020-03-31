@@ -179,11 +179,13 @@ response_localize_data:
         vision_diff = ( observer_stamp - vision_stamp ).toSec(); 
 
         active_integral( observer_diff , localize_diff , vision_diff );
-
         // Last time after we have to do sequence next we publish data in ros system
         observer_data.header.stamp = observer_stamp;
+        vec_observer_data.push_back( observer_data );
+        check_buffer_observer( observer_stamp - ros::Duration( global_time_limit_buffer ) );
         zeabus_ros::convert::nav_odometry::tf( &observer_data , &tf_transform );
         tf_broadcaster.sendTransform( tf_transform );
+        publisher_observer.publish( observer_data );
         // End loop 
     } // main loop
 
@@ -196,12 +198,15 @@ exit_main:
 bool reupdate_position( const nav_msgs::Odometry& vision_data )
 {
     bool have_reupdate = false;
-    for( auto it = vec_observer_data.begin() + 1 ; it != vec_observer_data.end() ; it++ )
+//    std::cout   << "In update position vec_observer_data have size " 
+//                << vec_observer_data.size() << "\n";
+    for( auto it = vec_observer_data.begin(); it != vec_observer_data.end() ; it++ )
     {
         // I have start at index 1 because we have to use two data for integral
         if( it->header.stamp > vision_data.header.stamp )
         {
             have_reupdate = true;
+            if( it == vec_observer_data.begin() ) break;
             // start part reupdate data instanly
             double diff_origin = ( it->header.stamp - ( it - 1 )->header.stamp ).toSec();
             double diff_newer = ( ( it->header.stamp ) - vision_data.header.stamp ).toSec();
@@ -235,8 +240,15 @@ bool reupdate_position( const nav_msgs::Odometry& vision_data )
     }
     if( ! have_reupdate && vec_observer_data.size() > 1 )
     {
-        vec_observer_data.rbegin()->pose.pose.position.x = vision_data.pose.pose.position.x;
-        vec_observer_data.rbegin()->pose.pose.position.y = vision_data.pose.pose.position.y;
+        std::cout   << "MAIN OBSERVER : vision data is old over limit period\n";
+    }
+    else if( ! have_reupdate && vec_observer_data.size() == 0 )
+    {
+        std::cout   << "MAIN OBSERVER : don't have data in buffer for updated\n";
+    }
+    else
+    {
+        ;
     }
     return have_reupdate;
 } // return true in case have to reupdate data and false in case that is last data in buffer
@@ -302,5 +314,5 @@ unsigned int localize_stamp_handle( const ros::Time stamp )
 
 void publish( const std::string message )
 {
-    ;
+    std::cout   << message <<  "\n";
 }

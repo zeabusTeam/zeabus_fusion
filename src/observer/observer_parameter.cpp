@@ -175,11 +175,6 @@ void active_parameter()
         config_parameter_on_localize_angular();
     }
 #endif
-#ifndef _TUNE_VISION_
-#ifndef _TUNE_LOCALIZE_
-    std::cout   << "Warning you didn't allow to config mode observer\n";
-#endif // _TUNE_LOCALIZE_
-#endif // _TUNE_VISION_
     return;
 } // active_parameter
 

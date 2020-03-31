@@ -46,6 +46,7 @@ void active_integral( const double& observer_diff,
     tf::Quaternion temp_quaternion;
     if( ! observer_status )
     {
+        std::cout   << "Copy data localize\n";
         observer_data.pose = localize_data.pose;
         observer_data.twist = localize_data.twist;
         active_bound_limit(); // call for try active observer_status

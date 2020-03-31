@@ -59,7 +59,6 @@ void active_vision()
     default:
         std::cout   << "VISION OBSERVER : Vision Have data overload\n";
     }
-    
 }
 
 void reset_vision()
