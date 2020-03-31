@@ -58,11 +58,11 @@ int main( int argv , char** argc )
     std::string list_frame[2] = { "bottom_sign" , "front_sign" };
     ros::Time list_stamp[2] = { ros::Time::now() , ros::Time::now() };
     unsigned int list_seq[ 2 ] = { 0 , 0 };
-#ifdef _PUBLISHER_ODOMETRY_
-    geometry_msgs::Vector3Stamped message_odometry;
-    ros::Publisher publish_odometry = nh.advertise< geometry_msgs::Vector3Stamped >( 
+    nav_msgs::Odometry message_odometry;
+    ros::Publisher publish_odometry = nh.advertise< nav_msgs::Odometry >( 
             "/localize/vision" , 1 );
-#endif
+    message_odometry.header.frame_id = "odom";
+    message_odometry.child_frame_id = "base_link_vision";
     
     // ======================================== PART ON TF
     static tf::TransformBroadcaster broadcaster_tf;
@@ -228,6 +228,10 @@ active_main:
                         zeabus::math::inv_rotation( temp_transform.getRotation() , &temp_vector3 );
                         // set Orientation for rotation by get data from odom
                         broadcast_transform.setRotation( temp_transform.getRotation() );
+                        message_odometry.pose.pose.orientation.x = temp_transform.getRotation().x();
+                        message_odometry.pose.pose.orientation.y = temp_transform.getRotation().y();
+                        message_odometry.pose.pose.orientation.z = temp_transform.getRotation().z();
+                        message_odometry.pose.pose.orientation.w = temp_transform.getRotation().w();
 
 #ifdef _SHOW_CALCULATE_
                         printf( "%14s seq %5u odom    :%10.3f%10.3f%10.3f\n" , 
@@ -251,12 +255,11 @@ active_main:
                                 list_seq[ run ] );
 #endif
 // =====> STEP : Broadcast data base_link_vision
-#ifdef _PUBLISHER_ODOMETRY_
                         message_odometry.header.stamp = it->stamp;
-                        zeabus_ros::convert::geometry_vector3::tf( &temp_vector3 ,
-                                &message_odometry.vector );
+                        message_odometry.pose.pose.position.x = temp_vector3.x();
+                        message_odometry.pose.pose.position.y = temp_vector3.y();
+                        message_odometry.pose.pose.position.z = temp_vector3.z();
                         publish_odometry.publish( message_odometry );
-#endif          
                         // set Time stamp before start
                         broadcast_transform.stamp_ = it->stamp;
                         // set Vector odom to base_link from base_link frame
