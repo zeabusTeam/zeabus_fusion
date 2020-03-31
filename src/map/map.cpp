@@ -65,15 +65,18 @@ int main( int argv , char** argc )
 #endif
     
     // ======================================== PART ON TF
+    static tf::TransformBroadcaster broadcaster_tf;
     static tf::TransformListener listener_tf;
     tf::StampedTransform temp_transform;
     std::string temp_string;
     tf::Quaternion temp_quaternion;
     tf::Vector3 temp_vector3;
-    tf::Quaternion rotation_bottom_camera; // rotation bottom camera to odom : vary
+    // rotation bottom camera optical frame to base link : constant
+    tf::Quaternion rotation_bottom_camera; 
     // translation bottom camera to robot pose : constant
     tf::Vector3 translation_bottom_camera; 
-    tf::Quaternion rotation_front_camera; // rotation front camera to odom : vary
+    // rotation front camera optical frame to base link : constant
+    tf::Quaternion rotation_front_camera;
     // translation front camera to robot pose : constant
     tf::Vector3 translation_front_camera;
 
@@ -98,7 +101,7 @@ listen_tf_activate:
                 ros::Time(0),
                 temp_transform );
             translation_bottom_camera = temp_transform.getOrigin();
-            printf( "Translation for bottom camera optical : %8.2f%8.2f%8.2f\n" , 
+            printf( "Translation for bottom camera : %8.2f%8.2f%8.2f\n" , 
                     translation_bottom_camera.x(),
                     translation_bottom_camera.y(),
                     translation_bottom_camera.z() );
@@ -108,11 +111,33 @@ listen_tf_activate:
                 ros::Time(0),
                 temp_transform );
             translation_front_camera = temp_transform.getOrigin();
-            printf( "Translation for front camera optical : %8.2f%8.2f%8.2f\n" , 
+            printf( "Translation for front camera : %8.2f%8.2f%8.2f\n" , 
                     translation_front_camera.x(),
                     translation_front_camera.y(),
                     translation_front_camera.z() );
             printf( "Recive translation camera opitcal\n");
+
+            listener_tf.lookupTransform( "bottom_camera_optical" ,
+                "base_link",
+                ros::Time(),
+                temp_transform );
+            rotation_bottom_camera = temp_transform.getRotation();
+            printf( "Rotate for bottom camera : %8.2f%8.2f%8.2f%8.2f\n" , 
+                    rotation_bottom_camera.x(),
+                    rotation_bottom_camera.y(),
+                    rotation_bottom_camera.z(),
+                    rotation_bottom_camera.w() );
+
+            listener_tf.lookupTransform( "front_camera_optical" ,
+                "base_link",
+                ros::Time(),
+                temp_transform );
+            rotation_front_camera = temp_transform.getRotation();
+            printf( "Rotate for front camera  : %8.2f%8.2f%8.2f%8.2f\n" , 
+                    rotation_front_camera.x(),
+                    rotation_front_camera.y(),
+                    rotation_front_camera.z(),
+                    rotation_front_camera.w() );
             goto active_main;
         }
         catch( tf::TransformException ex )
@@ -160,23 +185,21 @@ active_main:
                             printf( "NODE MAP : %s\n" , temp_string.c_str() );
                             list_stamp[ run ] = ros::Time( 0 );
                         }
-                        // Move vector translation to base_link frame
+// =====> STEP : Prepare vector translation
+                        // get vector translation from optical frame to object
                         temp_vector3 = zeabus_ros::convert::geometry_vector3::tf( it->translation);
-                        zeabus::math::inv_rotation( rotation_to_optical_frame , &temp_vector3 );
                         if( it->frame_id == "front_camera_optical" )
                         {
-//                            temp_vector3 = ( translation_front_camera + 
-//                                    zeabus_ros::convert::geometry_vector3::tf( it->translation ) );
-                            listener_tf.lookupTransform( "odom" , "front_camera" , 
-                                  list_stamp[ run ], temp_transform );
+                            // rotation data camera_optical to base_link frame
+                            zeabus::math::inv_rotation( rotation_front_camera , &temp_vector3 );
+                            // After rotation change origin frame from camera_optical to base_link
                             temp_vector3 += translation_front_camera;
                         }
                         else if( it->frame_id == "bottom_camera_optical" )
                         {
-//                            temp_vector3 = ( translation_bottom_camera + 
-//                                    zeabus_ros::convert::geometry_vector3::tf( it->translation ) );
-                            listener_tf.lookupTransform( "odom" , "bottom_camera" , 
-                                  list_stamp[ run ], temp_transform );
+                            // rotation data camera_optical to base_link frame
+                            zeabus::math::inv_rotation( rotation_bottom_camera , &temp_vector3 );
+                            // After rotation change origin frame from camera_optical to base_link
                             temp_vector3 += translation_bottom_camera;
                         }
                         else
@@ -185,6 +208,7 @@ active_main:
                                     it->frame_id.c_str() );
                             break;
                         }
+                        // Now We receive data base_link to object in base_link frame
 #ifdef _SHOW_CALCULATE_
                         printf( "%14s seq %5u receive :%10.3f%10.3f%10.3f\n" , 
                                 it->child_frame_id.c_str() , list_seq[ run ],
@@ -194,28 +218,34 @@ active_main:
                                 temp_vector3.x() , temp_vector3.y() ,temp_vector3.z() );
 #endif
                         // Prepare data to coordinate of odom frame
-//                        printf( "Request time %f\n" , list_stamp[ run ].toSec() );
-//                        listener_tf.lookupTransform( "odom" , it->frame_id , 
-//                              list_stamp[ run ], temp_transform );
+// =====> STEP : Convert data from base_link to odom frame at time stamp
+                        printf( "Request time %f\n" , list_stamp[ run ].toSec() );
+                        listener_tf.lookupTransform( "base_link" , "odom" , 
+                                list_stamp[ run ], temp_transform );
                         zeabus::math::inv_rotation( temp_transform.getRotation() , &temp_vector3 );
+
 #ifdef _SHOW_CALCULATE_
                         printf( "%14s seq %5u odom    :%10.3f%10.3f%10.3f\n" , 
                                 it->child_frame_id.c_str() , list_seq[ run ],
                                 temp_vector3.x() , temp_vector3.y() ,temp_vector3.z() );
 #endif
+
                         listener_tf.lookupTransform( "odom" , it->child_frame_id , 
                                 ros::Time(0), temp_transform );
                         temp_vector3 = temp_transform.getOrigin() - temp_vector3; 
+
 #ifdef _SHOW_CALCULATE_
                         printf( "%14s seq %5u result  :%10.3f%10.3f%10.3f\n\n" , 
                                 it->child_frame_id.c_str() , list_seq[ run ],
                                 temp_vector3.x() , temp_vector3.y() ,temp_vector3.z() );
 #endif
+
 #ifdef _SHOW_SEQ
                         printf( "receive %14s from %14s seq %5u\n" , it->child_frame_id.c_str(),
                                 it->frame_id.c_str() , 
                                 list_seq[ run ] );
 #endif
+
 #ifdef _PUBLISHER_ODOMETRY_
                         message_odometry.header.stamp = ros::Time::now();
                         zeabus_ros::convert::geometry_vector3::tf( &temp_vector3 ,
