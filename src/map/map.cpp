@@ -12,8 +12,8 @@
 // REFERENCE
 
 // MACRO SET
-#define _SHOW_SEQ_
-#define _SHOW_CALCULATE_
+//#define _SHOW_SEQ_
+//#define _SHOW_CALCULATE_
 #define _PUBLISHER_ODOMETRY_
 
 // MACRO CONDITION
@@ -212,6 +212,7 @@ active_main:
                             break;
                         }
                         // Now We receive data base_link to object in base_link frame
+                        printf( "Request time %f\n" , list_stamp[ run ].toSec() );
 #ifdef _SHOW_CALCULATE_
                         printf( "%14s seq %5u receive :%10.3f%10.3f%10.3f\n" , 
                                 it->child_frame_id.c_str() , list_seq[ run ],
@@ -222,7 +223,6 @@ active_main:
 #endif
                         // Prepare data to coordinate of odom frame
 // =====> STEP : Convert data from base_link to odom frame at time stamp
-                        printf( "Request time %f\n" , list_stamp[ run ].toSec() );
                         listener_tf.lookupTransform( "odom" , "base_link" , 
                                 list_stamp[ run ], temp_transform );
                         zeabus::math::inv_rotation( temp_transform.getRotation() , &temp_vector3 );
@@ -252,7 +252,7 @@ active_main:
 #endif
 // =====> STEP : Broadcast data base_link_vision
 #ifdef _PUBLISHER_ODOMETRY_
-                        message_odometry.header.stamp = ros::Time::now();
+                        message_odometry.header.stamp = it->stamp;
                         zeabus_ros::convert::geometry_vector3::tf( &temp_vector3 ,
                                 &message_odometry.vector );
                         publish_odometry.publish( message_odometry );
@@ -262,7 +262,11 @@ active_main:
                         // set Vector odom to base_link from base_link frame
                         broadcast_transform.setOrigin( temp_vector3 );
                         // Now send data results
-                        broadcaster_tf.sendTransform( broadcast_transform ); 
+                        broadcaster_tf.sendTransform( broadcast_transform );
+                        std::cout   << "At time " << it->stamp 
+                                    << " send data is " 
+                                    << broadcast_transform.getOrigin().x() << " "
+                                    << broadcast_transform.getOrigin().y() << "\n";
                     }
                     have_data = true;
                     break;

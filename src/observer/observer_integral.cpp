@@ -42,11 +42,14 @@ void active_integral( const double& observer_diff,
         const double& localize_diff,
         const double& vision_diff )
 {
+//  printf( "INTEGRAL OBSERVER : time report %15.3f%15.3f%15.3f\n" ,
+//          observer_diff , localize_diff , vision_diff );
     double temp_array[3];
     tf::Quaternion temp_quaternion;
     if( ! observer_status )
     {
         std::cout   << "Copy data localize\n";
+        reset_buffer_observer();
         observer_data.pose = localize_data.pose;
         observer_data.twist = localize_data.twist;
         active_bound_limit(); // call for try active observer_status
@@ -58,7 +61,7 @@ void active_integral( const double& observer_diff,
     std::memcpy( (void*) &mat_velocity.a[0][0],
             (void*) arr_robot_velocity.c_array(),
             sizeof( double ) * 6 ); // can copy directly because observer model have use this var
-
+    
     zeabus::math::rotation( current_quaternion , &mat_velocity.a[0][0] );
     mat_velocity += mat_acceleration * observer_diff; // calculate new velocity
 
@@ -73,6 +76,12 @@ void active_integral( const double& observer_diff,
     std::memcpy( (void*) arr_odom_linear_velocity.c_array(),
             (void*) arr_odom_linear_velocity.c_array(),
             sizeof( double ) * 3 ); // copy velocity from robot to odom 
+
+//    printf( "INTEGRAL OBSERVER : mat_acceleration\n" );
+//    zeabus_boost::printT( mat_acceleration );
+//    printf( "INTEGRAL OBSERVER : mat_velocity\n" );
+//    zeabus_boost::printT( mat_velocity );
+
 
     zeabus::math::inv_rotation( current_quaternion , arr_odom_linear_velocity.c_array() );
     zeabus::math::inv_rotation( current_quaternion , arr_odom_linear_acceleration.c_array() );
@@ -127,6 +136,7 @@ void active_integral( const double& observer_diff,
 //=========> STEP : calculate position x and y
     if( b_config_integral_vision )
     {
+        std::cout   << "INTEGRAL OBSERVER : Use vision data position\n";
         b_config_integral_vision = false;
         observer_data.pose.pose.position.x = vision_data.pose.pose.position.x + 
                 arr_odom_linear_velocity[0] * vision_diff -
@@ -138,11 +148,11 @@ void active_integral( const double& observer_diff,
     else
     {
         observer_data.pose.pose.position.x += 
-                arr_odom_linear_velocity[0] * vision_diff -
-                arr_odom_linear_acceleration[0] * pow( vision_diff , 2 ) / 2; 
+                arr_odom_linear_velocity[0] * localize_diff -
+                arr_odom_linear_acceleration[0] * pow( localize_diff , 2 ) / 2; 
         observer_data.pose.pose.position.y +=
-                arr_odom_linear_velocity[1] * vision_diff -
-                arr_odom_linear_acceleration[1] * pow( vision_diff , 2 ) / 2; 
+                arr_odom_linear_velocity[1] * localize_diff -
+                arr_odom_linear_acceleration[1] * pow( localize_diff , 2 ) / 2; 
     }
 
     active_bound_limit(); // call for normal progress

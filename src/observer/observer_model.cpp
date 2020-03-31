@@ -72,6 +72,10 @@ void active_model( const ros::Time& current_time )
             current_quaternion,
             current_time ) );
 
+//  printf( "MODEL OBSERVER : mat_acceleration\n" );
+//  zeabus_boost::printT( mat_acceleration );
+
+
     check_buffer_model( current_time - ros::Duration( global_time_limit_buffer ) );
 }
 

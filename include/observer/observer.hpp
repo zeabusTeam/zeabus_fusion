@@ -74,4 +74,5 @@ unsigned int localize_stamp_handle( const ros::Time stamp );
 void publish( const std::string message );
 bool reupdate_position( const nav_msgs::Odometry& vision_data );
 void check_buffer_observer( const ros::Time& minimum_time );
+void reset_buffer_observer();
 #endif // _ZEABUS_LOCALIZE_OBSERVER_OBSERVER_HPP__

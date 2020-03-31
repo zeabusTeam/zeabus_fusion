@@ -123,14 +123,7 @@ int main( int argv, char** argc )
                     &tf_error_string );
         if( tf_error != tf::NO_ERROR )
         {
-            std::cout   << "MAIN OBSERVER : error listen vision data\n";
             goto response_localize_data;
-        }
-        else
-        {
-            tf_listener.lookupTransform( "base_link_vision" , "odom" , vision_stamp,
-                    tf_transform );
-            zeabus_ros::convert::nav_odometry::tf( &tf_transform , &vision_data );
         }
 
 response_vision_data:
@@ -140,6 +133,14 @@ response_vision_data:
             case 2 :
                 reset_vision(); 
             case 1 :
+                tf_listener.lookupTransform( "base_link_vision" , "odom" , vision_stamp,
+                        tf_transform );
+                std::cout   << "At time " << vision_stamp << " Get data position is " 
+//                          << vision_data.pose.pose.position.x << " " 
+//                          << vision_data.pose.pose.position.y << "\n";
+                            << tf_transform.getOrigin().x() << " "
+                            << tf_transform.getOrigin().y() << "\n";
+                zeabus_ros::convert::nav_odometry::tf( &tf_transform , &vision_data );
                 active_vision();
             default:
                 break; 
@@ -152,7 +153,7 @@ response_localize_data:
             case 2 :
                 reset_localize();
                 reset_buffer_model();
-                vec_observer_data.clear();
+                reset_buffer_observer();
             case 1 :
                 active_localize();
             default:
@@ -200,6 +201,7 @@ bool reupdate_position( const nav_msgs::Odometry& vision_data )
     bool have_reupdate = false;
 //    std::cout   << "In update position vec_observer_data have size " 
 //                << vec_observer_data.size() << "\n";
+    unsigned int count = 0;
     for( auto it = vec_observer_data.begin(); it != vec_observer_data.end() ; it++ )
     {
         // I have start at index 1 because we have to use two data for integral
@@ -221,11 +223,21 @@ bool reupdate_position( const nav_msgs::Odometry& vision_data )
                     vision_data.pose.pose.position.y -
                     (it->pose.pose.position.y - (it-1)->pose.pose.position.y ) * time_ratio;
 
+//          std::cout   << "Reupdate process diff value x and y are " 
+//                      << diff_x << " , " << diff_y << "\n";
+            std::cout   << "Match on order " << count << " from " << vec_observer_data.size()
+                        << "\n\tObserver  :" 
+                        << it->pose.pose.position.x << " , " << it->pose.pose.position.y  
+                        << "\tVision    :" << vision_data.pose.pose.position.x 
+                        << " , " << vision_data.pose.pose.position.y << "\n";
+
             for( auto sub_it = it ; sub_it != vec_observer_data.end() ; sub_it++ )
             {
                 sub_it->pose.pose.position.x -= diff_x;
                 sub_it->pose.pose.position.y -= diff_y;
             }
+            observer_data.pose.pose.position.x -= diff_x;
+            observer_data.pose.pose.position.y -= diff_y;
             // can deletate because past data don't important to collect them
             // Delete will help you to filter time search
             // But this vector have time only 2 second? I desire that.
@@ -235,7 +247,7 @@ bool reupdate_position( const nav_msgs::Odometry& vision_data )
         } // case (it--)->header.stamp < vision_data.header.stamp < it->header.stamp
         else
         {
-            ;
+            count++;
         } 
     }
     if( ! have_reupdate && vec_observer_data.size() > 1 )
@@ -283,6 +295,7 @@ unsigned int vision_stamp_handle( const ros::Time stamp )
         }
         else
         {
+            std::cout   << stamp << "\n";
             state = 1;
         }
         save_stamp = stamp;
@@ -315,4 +328,10 @@ unsigned int localize_stamp_handle( const ros::Time stamp )
 void publish( const std::string message )
 {
     std::cout   << message <<  "\n";
+}
+
+void reset_buffer_observer()
+{
+    vec_observer_data.clear();
+    observer_data.pose = localize_data.pose;
 }
