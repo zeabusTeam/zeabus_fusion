@@ -161,12 +161,20 @@ response_localize_data:
                 &current_quaternion );
         // go to part predict or tune parameter
         active_parameter();
-        // after get parameter have to calculate and get acceleration
+        // after get parameter have to prepare data for calculate model
+        //  Part linear velocity
+        std::memcpy( (void*) arr_robot_velocity.c_array() ,
+                (void*) arr_odom_linear_velocity.c_array() ,
+                sizeof( double ) * 3 );
+        zeabus::math::rotation( current_quaternion , arr_robot_velocity.c_array() );
+        // Part angular velocity don't have to do becase we don't convert to odom frame
+        // Now it time to calculate model for finding acceleration
         active_model( observer_stamp );
         // Now we have get acceleration we can calculate now
         observer_diff = ( observer_stamp - observer_data.header.stamp ).toSec();
         localize_diff = ( observer_stamp - localize_stamp ).toSec();
         vision_diff = ( observer_stamp - vision_stamp ).toSec(); 
+
         active_integral( observer_diff , localize_diff , vision_diff );
 
         // Last time after we have to do sequence next we publish data in ros system
@@ -219,6 +227,11 @@ bool reupdate_position( const nav_msgs::Odometry& vision_data )
         {
             ;
         } 
+    }
+    if( ! have_reupdate && vec_observer_data.size() > 1 )
+    {
+        vec_observer_data.rbegin()->pose.pose.position.x = vision_data.pose.pose.position.x;
+        vec_observer_data.rbegin()->pose.pose.position.y = vision_data.pose.pose.position.y;
     }
     return have_reupdate;
 } // return true in case have to reupdate data and false in case that is last data in buffer

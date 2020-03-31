@@ -11,9 +11,9 @@
 
 // MACRO SET
 //#define _TUNE_ALL_
-#define _TUNE_VISION_
+//#define _TUNE_VISION_
 //#define _TUNE_LOCALIZE_
-#define _PRINT_TUNE_VISION_
+//#define _PRINT_TUNE_VISION_
 
 // MACRO CONDITION
 #ifdef _TUNE_ALL_

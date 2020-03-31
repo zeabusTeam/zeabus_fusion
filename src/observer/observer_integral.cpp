@@ -57,20 +57,26 @@ void active_integral( const double& observer_diff,
     std::memcpy( (void*) &mat_velocity.a[0][0],
             (void*) arr_robot_velocity.c_array(),
             sizeof( double ) * 6 ); // can copy directly because observer model have use this var
+
     zeabus::math::rotation( current_quaternion , &mat_velocity.a[0][0] );
-    mat_velocity += mat_acceleration * observer_diff; // calculate velocity
+    mat_velocity += mat_acceleration * observer_diff; // calculate new velocity
+
     std::memcpy( (void*) arr_robot_velocity.c_array(),
             (void*) &mat_velocity.a[0][0],
             sizeof( double ) * 3 ); // copy velocity from qvm::mat to array
+
     std::memcpy( (void*) arr_odom_linear_acceleration.c_array(),
             (void*) &mat_acceleration.a[0][0],
             sizeof( double ) * 3 ); // copy acceleration linear
+
     std::memcpy( (void*) arr_odom_linear_velocity.c_array(),
             (void*) arr_odom_linear_velocity.c_array(),
             sizeof( double ) * 3 ); // copy velocity from robot to odom 
+
     zeabus::math::inv_rotation( current_quaternion , arr_odom_linear_velocity.c_array() );
     zeabus::math::inv_rotation( current_quaternion , arr_odom_linear_acceleration.c_array() );
 
+//=========> STEP : calculate position z
     // Now we have current velocity we have to calculate distance
     if( b_config_integral_z_linear )
     {
@@ -83,10 +89,11 @@ void active_integral( const double& observer_diff,
     else
     {
         observer_data.pose.pose.position.z += 
-                boost::qvm::A20( mat_velocity ) * observer_diff - 
-                boost::qvm::A20( mat_acceleration ) * pow( observer_diff , 2 ) / 2;
+                arr_odom_linear_velocity[2] * observer_diff - 
+                arr_odom_linear_acceleration[2] * pow( observer_diff , 2 ) / 2;
     }
 
+//=========> STEP : calculate orientation
     // Differential is on time because current quaternion will fix already use localize or estimate 
     if( b_config_integral_rotation )
     {
@@ -116,24 +123,25 @@ void active_integral( const double& observer_diff,
         temp_quaternion = temp_quaternion * current_quaternion;
     }
 
+//=========> STEP : calculate position x and y
     if( b_config_integral_vision )
     {
         b_config_integral_vision = false;
         observer_data.pose.pose.position.x = vision_data.pose.pose.position.x + 
-                boost::qvm::A00( mat_velocity ) * vision_diff -
-                boost::qvm::A00( mat_acceleration ) * pow( vision_diff , 2 ) / 2; 
+                arr_odom_linear_velocity[0] * vision_diff -
+                arr_odom_linear_acceleration[0] * pow( vision_diff , 2 ) / 2; 
         observer_data.pose.pose.position.y = vision_data.pose.pose.position.y + 
-                boost::qvm::A10( mat_velocity ) * vision_diff -
-                boost::qvm::A10( mat_acceleration ) * pow( vision_diff , 2 ) / 2; 
+                arr_odom_linear_velocity[1] * vision_diff -
+                arr_odom_linear_acceleration[1] * pow( vision_diff , 2 ) / 2; 
     }
     else
     {
         observer_data.pose.pose.position.x += 
-                boost::qvm::A00( mat_velocity ) * observer_diff -
-                boost::qvm::A00( mat_acceleration ) * pow( observer_diff , 2 ) / 2; 
+                arr_odom_linear_velocity[0] * vision_diff -
+                arr_odom_linear_acceleration[0] * pow( vision_diff , 2 ) / 2; 
         observer_data.pose.pose.position.y +=
-                boost::qvm::A10( mat_velocity ) * observer_diff -
-                boost::qvm::A10( mat_acceleration ) * pow( observer_diff , 2 ) / 2; 
+                arr_odom_linear_velocity[1] * vision_diff -
+                arr_odom_linear_acceleration[1] * pow( vision_diff , 2 ) / 2; 
     }
 
     active_bound_limit(); // call for normal progress
@@ -148,6 +156,8 @@ void active_integral( const double& observer_diff,
     observer_data.twist.twist.angular.x = boost::qvm::A30( mat_velocity );
     observer_data.twist.twist.angular.y = boost::qvm::A40( mat_velocity );
     observer_data.twist.twist.angular.z = boost::qvm::A50( mat_velocity );
+
+    // Now we have all data next we have to save odom velocity
     
 exit_active_integral:
     return; 

@@ -17,6 +17,7 @@ extern boost::qvm::mat< double , 6 , 1 > mat_acceleration;
 extern boost::qvm::mat< double , 6 , 1 > mat_velocity;
 extern boost::array< double , 6 > arr_robot_velocity;
 extern boost::array< double , 3 > arr_odom_linear_velocity;
+extern boost::array< double , 3 > arr_odom_linear_acceleration;
 
 #ifndef _ZEABUS_LOCALIZE_OBSERVER_OBSERVER_INTEGRAL_HPP__
 #define _ZEABUS_LOCALIZE_OBSERVER_OBSERVER_INTEGRAL_HPP__
