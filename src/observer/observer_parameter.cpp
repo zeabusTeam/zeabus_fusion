@@ -11,9 +11,9 @@
 
 // MACRO SET
 //#define _TUNE_ALL_
-//#define _TUNE_VISION_
+#define _TUNE_VISION_
 //#define _TUNE_LOCALIZE_
-//#define _PRINT_TUNE_VISION_
+#define _PRINT_TUNE_VISION_
 
 // MACRO CONDITION
 #ifdef _TUNE_ALL_
@@ -161,7 +161,7 @@ void active_parameter()
 #ifdef _TUNE_VISION_
     if( b_config_model_vision )
     {
-       config_parameter_on_localize_angular(); 
+       config_parameter_on_vision(); 
     }
 #endif    
 #ifdef _TUNE_LOCALIZE_
