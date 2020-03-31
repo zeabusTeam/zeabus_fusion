@@ -99,8 +99,8 @@ listen_tf_activate:
     while( ros::ok() )
     {
         try{
-            listener_tf.lookupTransform( "bottom_camera",
-                "base_link",
+            listener_tf.lookupTransform( "base_link",
+                "bottom_camera",
                 ros::Time(0),
                 temp_transform );
             translation_bottom_camera = temp_transform.getOrigin();
@@ -109,8 +109,8 @@ listen_tf_activate:
                     translation_bottom_camera.y(),
                     translation_bottom_camera.z() );
 
-            listener_tf.lookupTransform( "front_camera",
-                "base_link",
+            listener_tf.lookupTransform( "base_link",
+                "front_camera",
                 ros::Time(0),
                 temp_transform );
             translation_front_camera = temp_transform.getOrigin();
@@ -120,23 +120,23 @@ listen_tf_activate:
                     translation_front_camera.z() );
             printf( "Recive translation camera opitcal\n");
 
-            listener_tf.lookupTransform( "bottom_camera_optical" ,
-                "base_link",
+            listener_tf.lookupTransform( "base_link",
+                "bottom_camera_optical" ,
                 ros::Time(),
                 temp_transform );
             rotation_bottom_camera = temp_transform.getRotation();
-            printf( "Rotate for bottom camera : %8.2f%8.2f%8.2f%8.2f\n" , 
+            printf( "Rotate for bottom optical : %8.2f%8.2f%8.2f%8.2f\n" , 
                     rotation_bottom_camera.x(),
                     rotation_bottom_camera.y(),
                     rotation_bottom_camera.z(),
                     rotation_bottom_camera.w() );
 
-            listener_tf.lookupTransform( "front_camera_optical" ,
-                "base_link",
+            listener_tf.lookupTransform( "base_link",
+                "front_camera_optical" ,
                 ros::Time(),
                 temp_transform );
             rotation_front_camera = temp_transform.getRotation();
-            printf( "Rotate for front camera  : %8.2f%8.2f%8.2f%8.2f\n" , 
+            printf( "Rotate for front optical  : %8.2f%8.2f%8.2f%8.2f\n" , 
                     rotation_front_camera.x(),
                     rotation_front_camera.y(),
                     rotation_front_camera.z(),
@@ -223,7 +223,7 @@ active_main:
                         // Prepare data to coordinate of odom frame
 // =====> STEP : Convert data from base_link to odom frame at time stamp
                         printf( "Request time %f\n" , list_stamp[ run ].toSec() );
-                        listener_tf.lookupTransform( "base_link" , "odom" , 
+                        listener_tf.lookupTransform( "odom" , "base_link" , 
                                 list_stamp[ run ], temp_transform );
                         zeabus::math::inv_rotation( temp_transform.getRotation() , &temp_vector3 );
                         // set Orientation for rotation by get data from odom
