@@ -32,13 +32,13 @@ const double learning_rate = 0.1;
 const std::string package_name = "zeabus_localize";
 const std::string sub_directory = "parameter/observer";
 const std::string file_name = "default.csv";
-const std::string file_name_dump = file_name;
-const std::string file_name_save = file_name;
+const std::string file_name_dump = "end_01.csv";
+const std::string file_name_load = "start_01.csv";
 
 void load_parameter()
 {
     zeabus::FileCSV fh;
-    fh.open( zeabus_ros::get_full_path( package_name , sub_directory , file_name ) );
+    fh.open( zeabus_ros::get_full_path( package_name , sub_directory , file_name_load ) );
     zeabus::extract_csv_type_3( &fh , &mat_force_observer.a[0][0] , 
             arr_viscosity_k.c_array(),
             arr_viscosity_c.c_array() );
@@ -47,7 +47,7 @@ void load_parameter()
 
 void dump_parameter()
 {
-    std::string temp = zeabus_ros::get_full_path( package_name , sub_directory , file_name ); 
+    std::string temp = zeabus_ros::get_full_path( package_name , sub_directory , file_name_dump ); 
     zeabus::dump_csv_type_3( temp, 
             &mat_force_observer.a[0][0],
             arr_viscosity_k.c_array(),

@@ -22,7 +22,7 @@ extern const std::string package_name;
 extern const std::string sub_directory;
 extern const std::string file_name;
 extern const std::string file_name_dump;
-extern const std::string file_name_save;
+extern const std::string file_name_load;
 
 #ifndef _ZEABUS_LOCALIZE_OBSERVER_OBSERVER_PARAMETER_HPP__
 #define _ZEABUS_LOCALIZE_OBSERVER_OBSERVER_PARAMETER_HPP__

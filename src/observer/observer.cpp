@@ -100,6 +100,8 @@ int main( int argv, char** argc )
 
     reset_integral();
 
+    load_parameter();
+
     while( ros::ok() )
     {
         rate.sleep();
@@ -210,6 +212,8 @@ response_localize_data:
         publisher_observer.publish( observer_data );
         // End loop 
     } // main loop
+
+    dump_parameter();
 
 exit_main:
     ros::shutdown();
