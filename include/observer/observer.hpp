@@ -42,6 +42,7 @@
 #include    <nav_msgs/Odometry.h>
 #include    <zeabus_utility/Float64Array8.h>
 #include    <zeabus_utility/Float64Array6.h>
+#include    <zeabus_utility/ObserverPoint.h>
 
 #include    <boost/array.hpp> // Beacause ros msg fix length will use boost array
 

@@ -11,6 +11,7 @@
 //  ref01 : http://docs.ros.org/diamondback/api/tf/html/c++/classtf_1_1Transformer.html
 
 // MACRO SET
+#define _PRINT_REUPDATE_POSITION_
 
 // MACRO CONDITION
 
@@ -223,16 +224,30 @@ exit_main:
 
 bool reupdate_position( const nav_msgs::Odometry& vision_data )
 {
+    static ros::Publisher publisher_point = ros::NodeHandle("").advertise< 
+            zeabus_utility::ObserverPoint >( "/localize/observer/point" , 1 );
+    static zeabus_utility::ObserverPoint message_point;
     bool have_reupdate = false;
-//    std::cout   << "In update position vec_observer_data have size " 
-//                << vec_observer_data.size() << "\n";
+#ifdef _PRINT_REUPDATE_POSITION_
     unsigned int count = 0;
+#endif // _PRINT_REUPDATE_POSITION_
     for( auto it = vec_observer_data.begin(); it != vec_observer_data.end() ; it++ )
     {
         // I have start at index 1 because we have to use two data for integral
         if( it->header.stamp > vision_data.header.stamp )
         {
             have_reupdate = true;
+            message_point.vision_point = vision_data.pose.pose.position;
+            message_point.observer_point = it->pose.pose.position;
+            message_point.vision_stamp = vision_data.header.stamp;
+            message_point.observer_stamp = it->header.stamp;
+            message_point.error_point.x =  
+                    ( message_point.observer_point.x - message_point.vision_point.x );
+            message_point.error_point.y = 
+                    ( message_point.observer_point.y - message_point.vision_point.y );
+            message_point.error_point.z = 
+                    ( message_point.observer_point.z - message_point.vision_point.z );
+            publisher_point.publish( message_point );
             if( it == vec_observer_data.begin() ) break;
             // start part reupdate data instanly
             double diff_origin = ( it->header.stamp - ( it - 1 )->header.stamp ).toSec();
@@ -248,13 +263,12 @@ bool reupdate_position( const nav_msgs::Odometry& vision_data )
                     vision_data.pose.pose.position.y -
                     (it->pose.pose.position.y - (it-1)->pose.pose.position.y ) * time_ratio;
 
-//          std::cout   << "Reupdate process diff value x and y are " 
-//                      << diff_x << " , " << diff_y << "\n";
-            std::cout   << "Match on order " << count << " from " << vec_observer_data.size()
-                        << "\n\tObserver  :" 
-                        << it->pose.pose.position.x << " , " << it->pose.pose.position.y  
-                        << "\tVision    :" << vision_data.pose.pose.position.x 
-                        << " , " << vision_data.pose.pose.position.y << "\n";
+#ifdef _PRINT_REUPDATE_POSITION_
+            printf( "Math on order %4u from %4lu Observer %8.3f:%8.3f Vision %8.3f:%8.3f\n",
+                    count , vec_observer_data.size(),
+                    it->pose.pose.position.x , it->pose.pose.position.y,
+                    vision_data.pose.pose.position.x , vision_data.pose.pose.position.y );
+#endif // _PRINT_REUPDATE_POSITION_
 
             for( auto sub_it = it ; sub_it != vec_observer_data.end() ; sub_it++ )
             {
@@ -272,7 +286,11 @@ bool reupdate_position( const nav_msgs::Odometry& vision_data )
         } // case (it--)->header.stamp < vision_data.header.stamp < it->header.stamp
         else
         {
+#ifdef _PRINT_REUPDATE_POSITION_
             count++;
+#else
+            ;
+#endif
         } 
     }
     if( ! have_reupdate && vec_observer_data.size() > 1 )

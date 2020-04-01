@@ -28,6 +28,9 @@ boost::array< double , 6 > arr_viscosity_c = { 0 , 0 , 0 , 0 , 0 , 0 };
 boost::qvm::mat< double , 6 , 1 > mat_force_observer = { 0 , 0 , 0 , 0 , 0 , 0 };
 
 const double learning_rate = 0.1;
+const double learning_rate_observer = 0.1;
+const double learning_rate_k = 0.001;
+const double learning_rate_c = 0.001;
 
 const std::string package_name = "zeabus_localize";
 const std::string sub_directory = "parameter/observer";
@@ -81,74 +84,107 @@ void config_parameter_on_vision()
         double accel_y = sum_y / boost::qvm::A11( zeabus::robot::mat_inertia );
         double accel_z = sum_z / boost::qvm::A22( zeabus::robot::mat_inertia );
     
-        double new_k_x = arr_viscosity_k[ 0 ] - learning_rate * 
+        double new_k_x = arr_viscosity_k[ 0 ] - learning_rate_k * 
                 ( vec_vision_acceleration.x() - accel_x ) /
                 ( boost::qvm::A00( zeabus::robot::mat_inertia) ) *
                 ( 1 - exp( -1.0 * arr_viscosity_c[ 0 ] * vec_vision_velocity_1.x() ) );
-        double new_k_y = arr_viscosity_k[ 1 ] - learning_rate * 
+        double new_k_y = arr_viscosity_k[ 1 ] - learning_rate_k * 
                 ( vec_vision_acceleration.y() - accel_y ) /
                 ( boost::qvm::A11( zeabus::robot::mat_inertia) ) *
                 ( 1 - exp( -1.0 * arr_viscosity_c[ 1 ] * vec_vision_velocity_1.y() ) );
-        double new_k_z = arr_viscosity_k[ 2 ] - learning_rate * 
+        double new_k_z = arr_viscosity_k[ 2 ] - learning_rate_k * 
                 ( vec_vision_acceleration.z() - accel_z ) /
                 ( boost::qvm::A22( zeabus::robot::mat_inertia) ) *
                 ( 1 - exp( -1.0 * arr_viscosity_c[ 2 ] * vec_vision_velocity_1.z() ) );
 
-        double new_c_x = arr_viscosity_c[ 0 ] - learning_rate *
+        double new_c_x = arr_viscosity_c[ 0 ] - learning_rate_c *
                 ( vec_vision_acceleration.x() - accel_x ) /
                 boost::qvm::A00( zeabus::robot::mat_inertia ) *
                 arr_viscosity_k[ 0 ] * vec_vision_velocity_1.x() * 
                 exp( -1.0 * arr_viscosity_c[ 0 ] * vec_vision_velocity_1.x() );
-        double new_c_y = arr_viscosity_c[ 2 ] - learning_rate *
+        double new_c_y = arr_viscosity_c[ 2 ] - learning_rate_c *
                 ( vec_vision_acceleration.y() - accel_y ) /
                 boost::qvm::A11( zeabus::robot::mat_inertia ) *
                 arr_viscosity_k[ 1 ] * vec_vision_velocity_1.y() * 
                 exp( -1.0 * arr_viscosity_c[ 1 ] * vec_vision_velocity_1.y() );
-        double new_c_z = arr_viscosity_c[ 2 ] - learning_rate *
+        double new_c_z = arr_viscosity_c[ 2 ] - learning_rate_c *
                 ( vec_vision_acceleration.z() - accel_z ) /
                 boost::qvm::A22( zeabus::robot::mat_inertia ) *
                 arr_viscosity_k[ 2 ] * vec_vision_velocity_1.z() * 
                 exp( -1.0 * arr_viscosity_c[ 2 ] * vec_vision_velocity_1.z() );
 
-        double new_observer_force_x = boost::qvm::A00( mat_force_observer ) - learning_rate *
+        double new_observer_force_x = boost::qvm::A00( mat_force_observer ) -learning_rate_observer *
                 ( vec_vision_acceleration.x() - accel_x ) / 
                 boost::qvm::A00( zeabus::robot::mat_inertia );
-        double new_observer_force_y = boost::qvm::A10( mat_force_observer ) - learning_rate *
+        double new_observer_force_y = boost::qvm::A10( mat_force_observer ) -learning_rate_observer *
                 ( vec_vision_acceleration.y() - accel_y ) / 
                 boost::qvm::A11( zeabus::robot::mat_inertia );
-        double new_observer_force_z = boost::qvm::A20( mat_force_observer ) - learning_rate *
+        double new_observer_force_z = boost::qvm::A20( mat_force_observer ) -learning_rate_observer *
                 ( vec_vision_acceleration.z() - accel_z ) / 
                 boost::qvm::A22( zeabus::robot::mat_inertia );
 
+
 #ifdef _PRINT_TUNE_VISION_
         printf( "------------- TUNE OBSERVER PART VISION --------------------------\n" );
-        printf( "k_constant :%7.2f%7.2f%7.2f to%7.2f%7.2f%7.2f\n" , 
+        printf( "Cost Value :%10.3f%10.3f%10.3f\n" , 
+                pow( vec_vision_acceleration.x() - accel_x , 2 ), 
+                pow( vec_vision_acceleration.y() - accel_y , 2 ),
+                pow( vec_vision_acceleration.z() - accel_z , 2 ) );
+        printf( "k_constant :%10.2f%10.2f%10.2f   to%10.2f%10.2f%10.2f\n" , 
                 arr_viscosity_k[ 0 ], arr_viscosity_k[ 1 ], arr_viscosity_k[ 2 ],
                 new_k_x , new_k_y , new_k_z );
-        printf( "c_constant :%7.2f%7.2f%7.2f to%7.2f%7.2f%7.2f\n" , 
+        printf( "c_constant :%10.2f%10.2f%10.2f   to%10.2f%10.2f%10.2f\n" , 
                 arr_viscosity_c[ 0 ], arr_viscosity_c[ 1 ], arr_viscosity_c[ 2 ],
                 new_c_x , new_c_y , new_c_z );
-        printf( "f_constant :%10.2f%10.2f%10.2f to%10.2f%10.2f%10.2f\n\n" ,
+        printf( "f_constant :%10.2f%10.2f%10.2f   to%10.2f%10.2f%10.2f\n\n" ,
                 boost::qvm::A00( mat_force_observer ) , 
                 boost::qvm::A10( mat_force_observer ) ,
                 boost::qvm::A20( mat_force_observer ) ,
                 new_observer_force_x , new_observer_force_y , new_observer_force_z );
 #endif // _PRINT_TUNE_VISION_
-        arr_viscosity_c[ 0 ] = new_c_x;
-        arr_viscosity_c[ 1 ] = new_c_y;
-        arr_viscosity_c[ 2 ] = new_c_z;
-        arr_viscosity_k[ 0 ] = new_k_x;
-        arr_viscosity_k[ 1 ] = new_k_y;
-        arr_viscosity_k[ 2 ] = new_k_z;
-        boost::qvm::A00( mat_force_observer ) = new_observer_force_x;
-        boost::qvm::A10( mat_force_observer ) = new_observer_force_y;
-        boost::qvm::A20( mat_force_observer ) = new_observer_force_z;
+        if( pow( vec_vision_acceleration.x() - accel_x , 2 ) > 1000 )
+        {
+            std::cout   << zeabus::escape_code::bold_red << "PARAM OBSERVER "
+                        << zeabus::escape_code::normal_white 
+                        << ": Abort with x over limit of cost value\n"; 
+        }
+        else
+        {
+            arr_viscosity_c[ 0 ] = new_c_x;
+            arr_viscosity_k[ 0 ] = new_k_x;
+            boost::qvm::A00( mat_force_observer ) = new_observer_force_x;
+        }
+        if( pow( vec_vision_acceleration.y() - accel_y , 2 ) > 1000 )
+        {
+            std::cout   << zeabus::escape_code::bold_red << "PARAM OBSERVER "
+                        << zeabus::escape_code::normal_white 
+                        << ": Abort with y over limit of cost value\n"; 
+        }
+        else
+        {
+            arr_viscosity_c[ 1 ] = new_c_y;
+            arr_viscosity_k[ 1 ] = new_k_y;
+            boost::qvm::A10( mat_force_observer ) = new_observer_force_y;
+        }
+        if( pow( vec_vision_acceleration.z() - accel_z , 2 ) > 1000 )
+        {
+            std::cout   << zeabus::escape_code::bold_red << "PARAM OBSERVER "
+                        << zeabus::escape_code::normal_white 
+                        << ": Abort with z over limit of cost value\n"; 
+        }
+        else
+        {
+            arr_viscosity_c[ 2 ] = new_c_z;
+            arr_viscosity_k[ 2 ] = new_k_z;
+            boost::qvm::A20( mat_force_observer ) = new_observer_force_z;
+        }
     }
     else
     {
         std::cout   << "TUNE OBSERVER : Don't have data suitable in buffer\n";
     }
-    
+exit_config_parameter_on_vision:
+    return;    
 } // config_parameter_on_vision
 
 void config_parameter_on_localize_angular()
@@ -158,12 +194,6 @@ void config_parameter_on_localize_angular()
 
 void active_parameter()
 {
-#ifdef _TUNE_VISION_
-    if( b_config_model_vision )
-    {
-       config_parameter_on_vision(); 
-    }
-#endif    
 #ifdef _TUNE_LOCALIZE_
     // We accept model parameter from camera more than pressure sensor differential
     if( b_config_model_z_linear && !( b_config_model_vision ) )
@@ -175,6 +205,13 @@ void active_parameter()
         config_parameter_on_localize_angular();
     }
 #endif
+#ifdef _TUNE_VISION_
+    if( b_config_model_vision )
+    {
+        config_parameter_on_vision(); 
+        b_config_model_vision = false;
+    }
+#endif    
     return;
 } // active_parameter
 
