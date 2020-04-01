@@ -153,6 +153,13 @@ void active_integral( const double& observer_diff,
         observer_data.pose.pose.position.y +=
                 arr_odom_linear_velocity[1] * observer_diff -
                 arr_odom_linear_acceleration[1] * pow( observer_diff , 2 ) / 2; 
+#ifdef _PRINT_ROBOT_STATE_
+        printf( "Observer add position x y are %11.6f , %11.6f\n\n" ,
+                arr_odom_linear_velocity[0] * observer_diff -
+                arr_odom_linear_acceleration[0] * pow( observer_diff , 2 ) / 2,
+                arr_odom_linear_velocity[1] * observer_diff -
+                arr_odom_linear_acceleration[1] * pow( observer_diff , 2 ) / 2 );
+#endif
     }
 
     active_bound_limit(); // call for normal progress
