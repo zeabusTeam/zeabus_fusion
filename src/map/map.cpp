@@ -212,8 +212,8 @@ active_main:
                             break;
                         }
                         // Now We receive data base_link to object in base_link frame
-                        printf( "Request time %f\n" , list_stamp[ run ].toSec() );
 #ifdef _SHOW_CALCULATE_
+                        printf( "Request time %f\n" , list_stamp[ run ].toSec() );
                         printf( "%14s seq %5u receive :%10.3f%10.3f%10.3f\n" , 
                                 it->child_frame_id.c_str() , list_seq[ run ],
                                 it->translation.x, it->translation.y , it->translation.z );
@@ -223,6 +223,13 @@ active_main:
 #endif
                         // Prepare data to coordinate of odom frame
 // =====> STEP : Convert data from base_link to odom frame at time stamp
+                        if( ! listener_tf.canTransform( "odom" , "base_link" , list_stamp[ run ] ) )
+                        {
+                            std::cout   << zeabus::escape_code::bold_red << "Fatal Map "
+                                        << zeabus::escape_code::normal_white 
+                                        << ": can't transform at time " << list_stamp[ run ];
+                            goto end_this_data;
+                        }
                         listener_tf.lookupTransform( "odom" , "base_link" , 
                                 list_stamp[ run ], temp_transform );
                         zeabus::math::inv_rotation( temp_transform.getRotation() , &temp_vector3 );
@@ -271,6 +278,7 @@ active_main:
                                     << broadcast_transform.getOrigin().x() << " "
                                     << broadcast_transform.getOrigin().y() << "\n";
                     }
+end_this_data:
                     have_data = true;
                     break;
                 } // condition check know object frame or not

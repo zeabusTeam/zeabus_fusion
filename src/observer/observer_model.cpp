@@ -10,6 +10,7 @@
 // REFERENCE
 
 // MACRO SET
+// #define _PRINT_MODEL_
 
 // MACRO CONDITION
 
@@ -28,10 +29,15 @@ std::vector< DataObserverModel > vec_model_data;
 
 void active_model( const ros::Time& current_time )
 {
+
+    zeabus::math::get_euler( current_quaternion , &roll , &pitch , &yaw );
     boost::qvm::mat< double , 3 , 3 > mat_rotation_force_z = {
         0,  0,  -1.0*sin( roll ),
         0,  0,  cos( pitch ) * sin( roll ),
         0,  0,  cos( pitch ) * cos( roll )
+//        0,  0,  0,
+//        0,  0,  0,
+//        -1.0*sin(roll),  cos( pitch) * sin( roll ),  cos( pitch ) * cos( roll )
     };
 
     zeabus_boost::mat_concat( &mat_force_gravity ,
@@ -63,6 +69,10 @@ void active_model( const ros::Time& current_time )
 
     mat_acceleration = zeabus::robot::mat_inertia_inverse * mat_acceleration;
 
+#ifdef _PRINT_MODEL_
+    report_model();
+#endif // _PRINT_MODEL_
+
     vec_model_data.push_back( DataObserverModel( mat_acceleration , 
             mat_force_gravity,
             mat_force_buoncy,
@@ -71,10 +81,6 @@ void active_model( const ros::Time& current_time )
             arr_robot_velocity,
             current_quaternion,
             current_time ) );
-
-//  printf( "MODEL OBSERVER : mat_acceleration\n" );
-//  zeabus_boost::printT( mat_acceleration );
-
 
     check_buffer_model( current_time - ros::Duration( global_time_limit_buffer ) );
 }
@@ -91,18 +97,23 @@ void calculate_viscosity()
 
 inline double viscosity( const unsigned int index )
 {
-    return -1.0 * arr_viscosity_k[ index ] * 
-            ( 1 - exp( -1.0 * arr_viscosity_c[index] * arr_robot_velocity[ index ] ) );
+    double answer = arr_viscosity_k[ index ] * 
+            ( 1 - exp( -1.0 * arr_viscosity_c[index] * fabs( arr_robot_velocity[ index ] ) ) );
+    if( arr_robot_velocity[ index ] > 0 ) answer *= -1;
+    return answer;
 }
 
 void report_model()
 {
+    printf( "Velocity Model  :%8.2f%8.2f%8.2f\n" , arr_robot_velocity[ 0 ] ,
+            arr_robot_velocity[ 1 ] , arr_robot_velocity[ 2 ] );
     printf( "Gravity force   :" ); zeabus_boost::printT( mat_force_gravity ); 
     printf( "Buoyancy force  :" ); zeabus_boost::printT( mat_force_buoncy );
     printf( "Constant force  :" ); zeabus_boost::printT( mat_force_constant ); 
     printf( "Viscosity force :" ); zeabus_boost::printT( mat_force_viscosity );
     printf( "Thruster force  :" ); zeabus_boost::printT( mat_force_thruster );
     printf( "Observer force  :" ); zeabus_boost::printT( mat_force_observer );
+    printf( "Acceleration    :" ); zeabus_boost::printT( mat_acceleration );
 }
 
 void check_buffer_model( const ros::Time& minimum_time )

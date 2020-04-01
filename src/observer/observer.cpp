@@ -11,7 +11,8 @@
 //  ref01 : http://docs.ros.org/diamondback/api/tf/html/c++/classtf_1_1Transformer.html
 
 // MACRO SET
-#define _PRINT_REUPDATE_POSITION_
+// #define _PRINT_REUPDATE_POSITION_
+// #define _AVERAGE_THRUSTER_FORCE_
 
 // MACRO CONDITION
 
@@ -21,6 +22,9 @@ nav_msgs::Odometry observer_data;
 nav_msgs::Odometry localize_data;
 nav_msgs::Odometry vision_data;
 boost::qvm::mat< double , 6 , 1 > mat_force_thruster = { 0 , 0 , 0 , 0 , 0 , 0 };
+#ifdef _AVERAGE_THRUSTER_FORCE_
+boost::qvm::mat< double , 6 , 1 > mat_save_thruster = { 0 , 0 , 0 , 0 , 0 , 0 };
+#endif
 tf::Quaternion current_quaternion;
 
 const double global_time_limit_buffer = 2; // unit second
@@ -77,12 +81,12 @@ int main( int argv, char** argc )
     listen_current_vision.setup_subscriber( topic_current_vision , 1 );
 
     // setup part tf we use tf for manage about transfer data
-    static tf::TransformListener tf_listener;
+//    static tf::TransformListener tf_listener;
     static tf::TransformBroadcaster tf_broadcaster;
-    ros::Time vision_stamp = ros::Time::now();
-    ros::Time localize_stamp = ros::Time::now();
-    ros::Time force_stamp = ros::Time::now();
     ros::Time observer_stamp = ros::Time::now();
+    ros::Time vision_stamp = observer_stamp;
+    ros::Time localize_stamp = observer_stamp;
+    ros::Time force_stamp = observer_stamp;
     tf::StampedTransform tf_transform;
     ros::Publisher publisher_observer = nh.advertise< nav_msgs::Odometry >( 
             "/localize/zeabus_observer" , 1 );
@@ -102,13 +106,15 @@ int main( int argv, char** argc )
     reset_integral();
 
     load_parameter();
-
+#ifdef _AVERAGE_THRUSTER_FORCE_
+    mat_save_thruster *= 0;
+#endif
+    mat_force_thruster *= 0;
     while( ros::ok() )
     {
         rate.sleep();
 
-        observer_stamp = ros::Time::now(); // observer stamp is stamp time of message observer
-
+        observer_stamp = ros::Time::now();
         // Download message current force of thruster
         lock_message_current_force.lock();
         if( force_stamp != message_current_force.header.stamp )
@@ -116,8 +122,14 @@ int main( int argv, char** argc )
             std::memcpy( (void*) mat_thruster_data.a ,
                     (void*) message_current_force.data.c_array(),
                     sizeof( double ) * 8 );
+#ifndef _AVERAGE_THRUSTER_FORCE_
             mat_force_thruster = boost::qvm::transposed( mat_thruster_data * 
                     zeabus::robot::direction_all ) * zeabus::robot::gravity;
+#else
+            mat_save_thruster = boost::qvm::transposed( mat_thruster_data * 
+                    zeabus::robot::direction_all ) * zeabus::robot::gravity;
+            mat_force_thruster = ( mat_force_thruster + mat_save_thruster ) / 2; 
+#endif
             force_stamp = message_current_force.header.stamp;
         }
         lock_message_current_force.unlock();
@@ -140,16 +152,6 @@ int main( int argv, char** argc )
         }
         lock_message_current_vision.unlock();
 
-        // Get vision stamp by look tf data because vision data only send when found
-//      tf_error = tf_listener.getLatestCommonTime( "odom" ,
-//                  "base_link_vision",
-//                  vision_stamp,
-//                  &tf_error_string );
-//      if( tf_error != tf::NO_ERROR )
-//      {
-//          goto response_localize_data;
-//      }
-
 response_vision_data:
         mode = vision_stamp_handle( vision_stamp );
         switch( mode )
@@ -157,6 +159,7 @@ response_vision_data:
             case 2 :
                 reset_vision(); 
             case 1 :
+//  Collect for look problem about somthine don't have reason
 //              tf_listener.lookupTransform( "base_link_vision" , "odom" , vision_stamp,
 //                      tf_transform );
 //              std::cout   << "At time " << vision_stamp << " Get data position is " 
@@ -264,7 +267,7 @@ bool reupdate_position( const nav_msgs::Odometry& vision_data )
                     (it->pose.pose.position.y - (it-1)->pose.pose.position.y ) * time_ratio;
 
 #ifdef _PRINT_REUPDATE_POSITION_
-            printf( "Math on order %4u from %4lu Observer %8.3f:%8.3f Vision %8.3f:%8.3f\n",
+            printf( "Match on order %4u from %4lu Observer %8.3f:%8.3f Vision %8.3f:%8.3f\n",
                     count , vec_observer_data.size(),
                     it->pose.pose.position.x , it->pose.pose.position.y,
                     vision_data.pose.pose.position.x , vision_data.pose.pose.position.y );
@@ -338,7 +341,6 @@ unsigned int vision_stamp_handle( const ros::Time stamp )
         }
         else
         {
-            std::cout   << stamp << "\n";
             state = 1;
         }
         save_stamp = stamp;

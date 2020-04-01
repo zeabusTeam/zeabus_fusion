@@ -25,6 +25,7 @@
 
 #include    <zeabus/file.hpp>
 #include    <zeabus/ros/node.hpp>
+#include    <zeabus/escape_code.hpp>
 #include    <zeabus/ros/static_tf.hpp>
 #include    <zeabus/ros/path_file.hpp>
 #include    <zeabus/ros/subscriber/base_class.hpp>

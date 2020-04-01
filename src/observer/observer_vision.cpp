@@ -31,7 +31,6 @@ void active_vision()
     double temp;
     vec_vision_data.push_back( DataRosVision( &vision_data ) );
     check_buffer_vision();
-    std::cout   << "vec_vision_data have size " << vec_vision_data.size() << "\n";
     switch( vec_vision_data.size() )
     {
     case 3 : // can find acceleration

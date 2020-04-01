@@ -10,6 +10,7 @@
 // REFERENCE
 
 // MACRO SET
+// #define _PRINT_ROBOT_STATE_
 
 // MACRO CONDITION
 
@@ -42,13 +43,12 @@ void active_integral( const double& observer_diff,
         const double& localize_diff,
         const double& vision_diff )
 {
-//  printf( "INTEGRAL OBSERVER : time report %15.3f%15.3f%15.3f\n" ,
+//    printf( "INTEGRAL OBSERVER : time report %15.3f%15.3f%15.3f\n" ,
 //          observer_diff , localize_diff , vision_diff );
     double temp_array[3];
     tf::Quaternion temp_quaternion;
     if( ! observer_status )
     {
-        std::cout   << "Copy data localize\n";
         reset_buffer_observer();
         observer_data.pose = localize_data.pose;
         observer_data.twist = localize_data.twist;
@@ -62,26 +62,25 @@ void active_integral( const double& observer_diff,
             (void*) arr_robot_velocity.c_array(),
             sizeof( double ) * 6 ); // can copy directly because observer model have use this var
     
-    zeabus::math::rotation( current_quaternion , &mat_velocity.a[0][0] );
-    mat_velocity += mat_acceleration * observer_diff; // calculate new velocity
+    mat_velocity += ( mat_acceleration * observer_diff ); // calculate new velocity
 
-    std::memcpy( (void*) arr_robot_velocity.c_array(),
-            (void*) &mat_velocity.a[0][0],
-            sizeof( double ) * 3 ); // copy velocity from qvm::mat to array
+    mat_velocity.a[2][0] = 0;
+    mat_acceleration.a[2][0] = 0;
 
     std::memcpy( (void*) arr_odom_linear_acceleration.c_array(),
             (void*) &mat_acceleration.a[0][0],
             sizeof( double ) * 3 ); // copy acceleration linear
 
     std::memcpy( (void*) arr_odom_linear_velocity.c_array(),
-            (void*) arr_odom_linear_velocity.c_array(),
+            (void*) &mat_velocity.a[0][0],
             sizeof( double ) * 3 ); // copy velocity from robot to odom 
 
-//    printf( "INTEGRAL OBSERVER : mat_acceleration\n" );
-//    zeabus_boost::printT( mat_acceleration );
-//    printf( "INTEGRAL OBSERVER : mat_velocity\n" );
-//    zeabus_boost::printT( mat_velocity );
-
+#ifdef _PRINT_ROBOT_STATE_
+    printf( "INTEGRAL OBSERVER : mat_acceleration\n" );
+    zeabus_boost::printT( mat_acceleration );
+    printf( "INTEGRAL OBSERVER : mat_velocity\n" );
+    zeabus_boost::printT( mat_velocity );
+#endif // _PRINT_ROBOT_STATE_
 
     zeabus::math::inv_rotation( current_quaternion , arr_odom_linear_velocity.c_array() );
     zeabus::math::inv_rotation( current_quaternion , arr_odom_linear_acceleration.c_array() );
@@ -101,6 +100,7 @@ void active_integral( const double& observer_diff,
         observer_data.pose.pose.position.z += 
                 arr_odom_linear_velocity[2] * observer_diff - 
                 arr_odom_linear_acceleration[2] * pow( observer_diff , 2 ) / 2;
+        active_bound_limit_depth();
     }
 
 //=========> STEP : calculate orientation
@@ -148,11 +148,11 @@ void active_integral( const double& observer_diff,
     else
     {
         observer_data.pose.pose.position.x += 
-                arr_odom_linear_velocity[0] * localize_diff -
-                arr_odom_linear_acceleration[0] * pow( localize_diff , 2 ) / 2; 
+                arr_odom_linear_velocity[0] * observer_diff -
+                arr_odom_linear_acceleration[0] * pow( observer_diff , 2 ) / 2; 
         observer_data.pose.pose.position.y +=
-                arr_odom_linear_velocity[1] * localize_diff -
-                arr_odom_linear_acceleration[1] * pow( localize_diff , 2 ) / 2; 
+                arr_odom_linear_velocity[1] * observer_diff -
+                arr_odom_linear_acceleration[1] * pow( observer_diff , 2 ) / 2; 
     }
 
     active_bound_limit(); // call for normal progress
