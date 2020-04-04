@@ -16,7 +16,11 @@
 extern boost::qvm::mat< double , 6 , 1 > mat_force_observer;
 extern boost::array< double , 6 > arr_viscosity_k;
 extern boost::array< double , 6 > arr_viscosity_c;
-extern const double learning_rate;
+extern const double learning_rate_observer;
+extern const double learning_rate_k;
+extern const double learning_rate_c;
+extern const double minimum_cost_value;
+extern const double maximum_cost_value;
 
 extern const std::string package_name;
 extern const std::string sub_directory;

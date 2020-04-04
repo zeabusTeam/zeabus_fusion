@@ -27,10 +27,11 @@ boost::array< double , 6 > arr_viscosity_k = { 0 , 0 , 0 , 0 , 0 , 0 };
 boost::array< double , 6 > arr_viscosity_c = { 0 , 0 , 0 , 0 , 0 , 0 };
 boost::qvm::mat< double , 6 , 1 > mat_force_observer = { 0 , 0 , 0 , 0 , 0 , 0 };
 
-const double learning_rate = 0.1;
 const double learning_rate_observer = 0.1;
 const double learning_rate_k = 0.001;
 const double learning_rate_c = 0.001;
+const double minimum_cost_value = 0.5;
+const double maximum_cost_value = 500;
 
 const std::string package_name = "zeabus_localize";
 const std::string sub_directory = "parameter/observer";
@@ -74,65 +75,65 @@ void config_parameter_on_vision()
         zeabus::math::rotation( temp_data.quaternion , &vec_vision_acceleration );
         // Don't worry to send ptr data because in each loop will calculate again every loop
         double temp;
-        double sum_x = boost::qvm::A00( temp_sum ) + 
+        auto sum_x = boost::qvm::A00( temp_sum ) + 
                 viscosity( arr_viscosity_k[ 0 ] , arr_viscosity_c[ 0 ] , vec_vision_velocity_1.x() );
-        double sum_y = boost::qvm::A10( temp_sum ) +
+        auto sum_y = boost::qvm::A10( temp_sum ) +
                 viscosity( arr_viscosity_k[ 1 ] , arr_viscosity_c[ 1 ] , vec_vision_velocity_1.y() );
-        double sum_z = boost::qvm::A20( temp_sum ) +
+        auto sum_z = boost::qvm::A20( temp_sum ) +
                 viscosity( arr_viscosity_k[ 2 ] , arr_viscosity_c[ 2 ] , vec_vision_velocity_1.z() );
 
-        double accel_x = sum_x / boost::qvm::A00( zeabus::robot::mat_inertia );
-        double accel_y = sum_y / boost::qvm::A11( zeabus::robot::mat_inertia );
-        double accel_z = sum_z / boost::qvm::A22( zeabus::robot::mat_inertia );
+        auto accel_x = sum_x / boost::qvm::A00( zeabus::robot::mat_inertia );
+        auto accel_y = sum_y / boost::qvm::A11( zeabus::robot::mat_inertia );
+        auto accel_z = sum_z / boost::qvm::A22( zeabus::robot::mat_inertia );
 
         // Temp variable use to collect data when velocity is position
         // viscosity when velocity is position return negative  
         temp = -1 + exp( -1.0 * arr_viscosity_c[ 0 ] * fabs( vec_vision_velocity_1.x() ) ); // vel +
         if( vec_vision_velocity_1.x() < 0 ) temp *= -1.0; 
-        double new_k_x = arr_viscosity_k[ 0 ] - learning_rate_k * 
+        auto new_k_x = arr_viscosity_k[ 0 ] - learning_rate_k * 
                 ( vec_vision_acceleration.x() - accel_x ) /
                 ( boost::qvm::A00( zeabus::robot::mat_inertia) ) * temp;
 
         temp = -1 + exp( -1.0 * arr_viscosity_c[ 1 ] * fabs( vec_vision_velocity_1.y() ) ); // vel +
         if( vec_vision_velocity_1.y() < 0 ) temp *= -1.0; 
-        double new_k_y = arr_viscosity_k[ 1 ] - learning_rate_k * 
+        auto new_k_y = arr_viscosity_k[ 1 ] - learning_rate_k * 
                 ( vec_vision_acceleration.y() - accel_y ) /
                 ( boost::qvm::A11( zeabus::robot::mat_inertia) ) * temp;
 
         temp = -1 + exp( -1.0 * arr_viscosity_c[ 2 ] * fabs( vec_vision_velocity_1.z() ) ); // vel +
         if( vec_vision_velocity_1.z() < 0 ) temp *= -1.0; 
-        double new_k_z = arr_viscosity_k[ 2 ] - learning_rate_k * 
+        auto new_k_z = arr_viscosity_k[ 2 ] - learning_rate_k * 
                 ( vec_vision_acceleration.z() - accel_z ) /
                 ( boost::qvm::A22( zeabus::robot::mat_inertia) ) * temp;
 
         temp = -1.0 * arr_viscosity_k[ 0 ] * fabs( vec_vision_velocity_1.x() ) * 
                 exp( -1.0 * arr_viscosity_c[ 0 ] * fabs( vec_vision_velocity_1.x() ) ); 
         if( vec_vision_velocity_1.x() < 0 ) temp *= -1;
-        double new_c_x = arr_viscosity_c[ 0 ] - learning_rate_c *
+        auto new_c_x = arr_viscosity_c[ 0 ] - learning_rate_c *
                 ( vec_vision_acceleration.x() - accel_x ) /
                 boost::qvm::A00( zeabus::robot::mat_inertia ) * temp;
 
         temp = -1.0 * arr_viscosity_k[ 1 ] * fabs( vec_vision_velocity_1.y() ) * 
                 exp( -1.0 * arr_viscosity_c[ 1 ] * fabs( vec_vision_velocity_1.y() ) ); 
         if( vec_vision_velocity_1.y() < 0 ) temp *= -1;
-        double new_c_y = arr_viscosity_c[ 2 ] - learning_rate_c *
+        auto new_c_y = arr_viscosity_c[ 2 ] - learning_rate_c *
                 ( vec_vision_acceleration.y() - accel_y ) /
                 boost::qvm::A11( zeabus::robot::mat_inertia ) * temp;
 
         temp = -1.0 * arr_viscosity_k[ 2 ] * fabs( vec_vision_velocity_1.z() ) * 
                 exp( -1.0 * arr_viscosity_c[ 2 ] * fabs( vec_vision_velocity_1.z() ) ); 
         if( vec_vision_velocity_1.z() < 0 ) temp *= -1;
-        double new_c_z = arr_viscosity_c[ 2 ] - learning_rate_c *
+        auto new_c_z = arr_viscosity_c[ 2 ] - learning_rate_c *
                 ( vec_vision_acceleration.z() - accel_z ) /
                 boost::qvm::A22( zeabus::robot::mat_inertia ) * temp;
 
-        double new_observer_force_x = boost::qvm::A00( mat_force_observer ) -learning_rate_observer *
+        auto new_observer_force_x = boost::qvm::A00( mat_force_observer ) -learning_rate_observer *
                 ( vec_vision_acceleration.x() - accel_x ) / 
                 boost::qvm::A00( zeabus::robot::mat_inertia );
-        double new_observer_force_y = boost::qvm::A10( mat_force_observer ) -learning_rate_observer *
+        auto new_observer_force_y = boost::qvm::A10( mat_force_observer ) -learning_rate_observer *
                 ( vec_vision_acceleration.y() - accel_y ) / 
                 boost::qvm::A11( zeabus::robot::mat_inertia );
-        double new_observer_force_z = boost::qvm::A20( mat_force_observer ) -learning_rate_observer *
+        auto new_observer_force_z = boost::qvm::A20( mat_force_observer ) -learning_rate_observer *
                 ( vec_vision_acceleration.z() - accel_z ) / 
                 boost::qvm::A22( zeabus::robot::mat_inertia );
 
@@ -154,7 +155,7 @@ void config_parameter_on_vision()
                 boost::qvm::A20( mat_force_observer ) ,
                 new_observer_force_x , new_observer_force_y , new_observer_force_z );
 #endif // _PRINT_TUNE_VISION_
-        if( cost_x < 0.5 || cost_x > 500 )
+        if( cost_x < minimum_cost_value || cost_x > maximum_cost_value )
         {
 //            std::cout   << zeabus::escape_code::bold_red << "PARAM OBSERVER "
 //                        << zeabus::escape_code::normal_white 
@@ -167,7 +168,7 @@ void config_parameter_on_vision()
             boost::qvm::A00( mat_force_observer ) = new_observer_force_x;
         }
 
-        if( cost_y < 0.5 || cost_y > 500 )
+        if( cost_y < minimum_cost_value || cost_y > maximum_cost_value )
         {
 //            std::cout   << zeabus::escape_code::bold_red << "PARAM OBSERVER "
 //                        << zeabus::escape_code::normal_white 
@@ -180,7 +181,7 @@ void config_parameter_on_vision()
             boost::qvm::A10( mat_force_observer ) = new_observer_force_y;
         }
 
-        if( cost_z < 0.5 || cost_z > 500 )
+        if( cost_z < minimum_cost_value || cost_z > maximum_cost_value )
         {
 //            std::cout   << zeabus::escape_code::bold_red << "PARAM OBSERVER "
 //                        << zeabus::escape_code::normal_white 
