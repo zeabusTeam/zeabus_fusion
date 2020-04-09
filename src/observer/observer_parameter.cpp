@@ -12,8 +12,9 @@
 // MACRO SET
 //#define _TUNE_ALL_
 #define _TUNE_VISION_
+#define _TUNE_VISION_OBSERVER_EQUATION_
 //#define _TUNE_LOCALIZE_
-#define _PRINT_TUNE_VISION_
+//#define _PRINT_TUNE_VISION_
 
 // MACRO CONDITION
 #ifdef _TUNE_ALL_
@@ -27,7 +28,11 @@ boost::array< double , 6 > arr_viscosity_k = { 0 , 0 , 0 , 0 , 0 , 0 };
 boost::array< double , 6 > arr_viscosity_c = { 0 , 0 , 0 , 0 , 0 , 0 };
 boost::qvm::mat< double , 6 , 1 > mat_force_observer = { 0 , 0 , 0 , 0 , 0 , 0 };
 
+#ifndef _TUNE_VISION_OBSERVER_EQUATION_
 const double learning_rate_observer = 0.1;
+#else
+const double learning_rate_observer = 0.01;
+#endif
 const double learning_rate_k = 0.001;
 const double learning_rate_c = 0.001;
 const double minimum_cost_value = 0.5;
@@ -127,6 +132,7 @@ void config_parameter_on_vision()
                 ( vec_vision_acceleration.z() - accel_z ) /
                 boost::qvm::A22( zeabus::robot::mat_inertia ) * temp;
 
+#ifndef _TUNE_VISION_OBSERVER_EQUATION_
         auto new_observer_force_x = boost::qvm::A00( mat_force_observer ) -learning_rate_observer *
                 ( vec_vision_acceleration.x() - accel_x ) / 
                 boost::qvm::A00( zeabus::robot::mat_inertia );
@@ -136,6 +142,26 @@ void config_parameter_on_vision()
         auto new_observer_force_z = boost::qvm::A20( mat_force_observer ) -learning_rate_observer *
                 ( vec_vision_acceleration.z() - accel_z ) / 
                 boost::qvm::A22( zeabus::robot::mat_inertia );
+#else
+        auto want_observer_force_x = 
+                vec_vision_acceleration.x() * boost::qvm::A00( zeabus::robot::mat_inertia ) - 
+                sum_x + boost::qvm::A00( mat_force_observer );
+        auto want_observer_force_y = 
+                vec_vision_acceleration.y() * boost::qvm::A11( zeabus::robot::mat_inertia ) - 
+                sum_y + boost::qvm::A10( mat_force_observer );
+        auto want_observer_force_z = 
+                vec_vision_acceleration.z() * boost::qvm::A22( zeabus::robot::mat_inertia ) -
+                sum_z + boost::qvm::A20( mat_force_observer );
+        // new  = origin + learning * ( desire - origin ) 
+        //      = ( origin - 1 )*learning + learning * desire
+        //      = learning * ( origin - 1 + desire );
+        auto new_observer_force_x = learning_rate_observer * (
+                boost::qvm::A00( mat_force_observer ) - 1 + want_observer_force_x );
+        auto new_observer_force_y = learning_rate_observer * (
+                boost::qvm::A10( mat_force_observer ) - 1 + want_observer_force_y );
+        auto new_observer_force_z = learning_rate_observer * (
+                boost::qvm::A20( mat_force_observer ) - 1 + want_observer_force_z );
+#endif
 
         double cost_x = pow( vec_vision_acceleration.x() - accel_x , 2 );
         double cost_y = pow( vec_vision_acceleration.y() - accel_y , 2 );
@@ -149,11 +175,20 @@ void config_parameter_on_vision()
         printf( "c_constant :%10.2f%10.2f%10.2f   to%10.2f%10.2f%10.2f\n" , 
                 arr_viscosity_c[ 0 ], arr_viscosity_c[ 1 ], arr_viscosity_c[ 2 ],
                 new_c_x , new_c_y , new_c_z );
+#ifndef _TUNE_VISION_OBSERVER_EQUATION_
         printf( "f_constant :%10.2f%10.2f%10.2f   to%10.2f%10.2f%10.2f\n\n" ,
                 boost::qvm::A00( mat_force_observer ) , 
                 boost::qvm::A10( mat_force_observer ) ,
                 boost::qvm::A20( mat_force_observer ) ,
                 new_observer_force_x , new_observer_force_y , new_observer_force_z );
+#else
+        printf( "f_constant :%8.2f%8.2f%8.2f want %8.2f%8.2f%8.2f get %8.2f%8.2f%8.f\n" ,
+                boost::qvm::A00( mat_force_observer ) , 
+                boost::qvm::A10( mat_force_observer ) ,
+                boost::qvm::A20( mat_force_observer ) ,
+                want_observer_force_x , want_observer_force_y , want_observer_force_z, 
+                new_observer_force_x , new_observer_force_y , new_observer_force_z );
+#endif // _TUNE_VISION_OBSERVER_EQUATION_
 #endif // _PRINT_TUNE_VISION_
         if( cost_x < minimum_cost_value || cost_x > maximum_cost_value )
         {

@@ -46,11 +46,12 @@ struct DataObserverModel
             const tf::Quaternion& quaternion,
             const ros::Time& stamp )
     {
-        this->mat_acceleration = mat_acceleration;
-        this->mat_force_thruster = mat_force_thruster;
-        this->mat_force_gravity = mat_force_gravity;
-        this->mat_force_buoncy = mat_force_buoncy;
-        this->mat_force_constant = mat_force_constant;
+        // assign( a , b ) // copy element b to a
+        boost::qvm::assign( this->mat_acceleration , mat_acceleration );
+        boost::qvm::assign( this->mat_force_thruster , mat_force_thruster );
+        boost::qvm::assign( this->mat_force_gravity , mat_force_gravity );
+        boost::qvm::assign( this->mat_force_buoncy , mat_force_buoncy );
+        boost::qvm::assign( this->mat_force_constant , mat_force_constant );
         this->arr_robot_velocity = arr_robot_velocity;
         this->stamp = stamp;
         this->quaternion = quaternion;

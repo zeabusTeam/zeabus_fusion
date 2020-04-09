@@ -41,7 +41,6 @@ void active_vision()
     case 2 : // can find velocity in odom frame
         vec_vision_velocity_1 = ( vec_vision_data[ 1 ].pose - vec_vision_data[ 0 ].pose ) / 
                 ( vec_vision_data[1].stamp - vec_vision_data[0].stamp ).toSec();
-
     case 1 : // can update position in integral vision part
         if( ! reupdate_position( vision_data ) )
         {
