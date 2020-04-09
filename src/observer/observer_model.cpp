@@ -10,7 +10,7 @@
 // REFERENCE
 
 // MACRO SET
-// #define _PRINT_MODEL_
+#define _PRINT_MODEL_
 
 // MACRO CONDITION
 
@@ -141,7 +141,7 @@ bool search_buffer_model( const ros::Time& target_time , DataObserverModel* ptr_
     bool have_data = false;
     for( auto rit = vec_model_data.crbegin() ; rit != vec_model_data.crend() ; rit++ )
     {
-        if( rit->stamp < target_time )
+        if( rit->stamp <= target_time )
         {
             *ptr_data = *rit;
             have_data = true;
