@@ -20,6 +20,5 @@ extern ros::Publisher publisher_point;
 #define _ZEABUS_LOCALIZE_OBSERVER_OBSERVER_REUPDATE_HPP__ 
 void setup_reupdate();
 bool reupdate_position( const nav_msgs::Odometry& vision_data );
-bool reupdate_velocity( const nav_msgs::Odometry& vision_data );
-bool reupdate_model( const nav_msgs::Odometry& vision_data );
+bool reupdate_calculate( const nav_msgs::Odometry& vision_data, const tf::Vector3& vec_velocity );
 #endif  

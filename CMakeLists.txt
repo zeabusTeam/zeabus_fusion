@@ -71,6 +71,7 @@ add_executable( observer
     src/observer/observer_model.cpp
     src/observer/observer_vision.cpp
     src/observer/observer_integral.cpp
+    src/observer/observer_reupdate.cpp
     src/observer/observer_localize.cpp
     src/observer/observer_parameter.cpp
     src/observer/observer_bound_limit.cpp

@@ -228,7 +228,9 @@ void config_parameter_on_vision()
             arr_viscosity_k[ 2 ] = new_k_z;
             boost::qvm::A20( mat_force_observer ) = new_observer_force_z;
         }
-    }
+        // not use 1 because data know acceleration and data vision data have velocity in unit 2
+        (void*) reupdate_calculate( vision_data , vec_vision_velocity_2 );
+    } // condition hit data in buffer
     else
     {
         std::cout   << "TUNE OBSERVER : Don't have data suitable in buffer\n";

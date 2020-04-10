@@ -64,8 +64,8 @@ void active_integral( const double& observer_diff,
     
     mat_velocity += ( mat_acceleration * observer_diff ); // calculate new velocity
 
-    mat_velocity.a[2][0] = 0;
-    mat_acceleration.a[2][0] = 0;
+//    mat_velocity.a[2][0] = 0;
+//    mat_acceleration.a[2][0] = 0;
 
     std::memcpy( (void*) arr_odom_linear_acceleration.c_array(),
             (void*) &mat_acceleration.a[0][0],

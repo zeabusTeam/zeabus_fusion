@@ -37,14 +37,24 @@ void active_vision()
         b_config_model_vision = true;
         temp = ( vec_vision_data[2].stamp - vec_vision_data[1].stamp ).toSec();
         vec_vision_velocity_2 = ( vec_vision_data[ 2 ].pose - vec_vision_data[ 1 ].pose ) / temp; 
+        vec_vision_velocity_1 = ( vec_vision_data[ 1 ].pose - vec_vision_data[ 0 ].pose ) / 
+                ( vec_vision_data[1].stamp - vec_vision_data[0].stamp ).toSec();
         vec_vision_acceleration = ( vec_vision_velocity_2 - vec_vision_velocity_1 ) / temp;
+        break;
     case 2 : // can find velocity in odom frame
         vec_vision_velocity_1 = ( vec_vision_data[ 1 ].pose - vec_vision_data[ 0 ].pose ) / 
                 ( vec_vision_data[1].stamp - vec_vision_data[0].stamp ).toSec();
+        if( ! reupdate_calculate( vision_data , vec_vision_velocity_1 ) )
+        {
+            std::cout   << "CONFIG INREGRAL ON VISION =======================================\n";
+            b_config_integral_vision = true;
+        }
+        break;
     case 1 : // can update position in integral vision part
         if( ! reupdate_position( vision_data ) )
         {
-            b_config_model_vision = true; // because you will cal when have new data
+            std::cout   << "CONFIG INREGRAL ON VISION =======================================\n";
+            b_config_integral_vision = true; // because you will cal when have new data
         }
         else
         {
