@@ -33,9 +33,9 @@ const double learning_rate_observer = 0.1;
 #else
 const double learning_rate_observer = 0.05;
 #endif
-const double learning_rate_k = 0.01;
-const double learning_rate_c = 0.01;
-const double minimum_cost_value = 0.5;
+const double learning_rate_k = 0.001;
+const double learning_rate_c = 0.001;
+const double minimum_cost_value = 0.05;
 const double maximum_cost_value = 500;
 
 const std::string package_name = "zeabus_localize";
@@ -92,7 +92,8 @@ void config_parameter_on_vision()
         auto accel_z = sum_z / boost::qvm::A22( zeabus::robot::mat_inertia );
 
         // Temp variable use to collect data when velocity is position
-        // viscosity when velocity is position return negative  
+        // viscosity when velocity is position return negative 
+#ifdef _USE_VISCOSITY_EXPONENTIAL_ 
         temp = -1 + exp( -1.0 * arr_viscosity_c[ 0 ] * fabs( vec_vision_velocity_1.x() ) ); // vel +
         if( vec_vision_velocity_1.x() < 0 ) temp *= -1.0; 
         auto new_k_x = arr_viscosity_k[ 0 ] - learning_rate_k * 
@@ -131,6 +132,23 @@ void config_parameter_on_vision()
         auto new_c_z = arr_viscosity_c[ 2 ] - learning_rate_c *
                 ( vec_vision_acceleration.z() - accel_z ) /
                 boost::qvm::A22( zeabus::robot::mat_inertia ) * temp;
+#else // condition _USE_VISCOSITY_LINEAR
+        auto new_k_x = arr_viscosity_k[ 0 ] - learning_rate_k * 
+                ( vec_vision_acceleration.x() - accel_x ) /
+                boost::qvm::A00( zeabus::robot::mat_inertia ) *
+                ( -1.0 * vec_vision_velocity_1.x() );
+        auto new_k_y = arr_viscosity_k[ 1 ] - learning_rate_k * 
+                ( vec_vision_acceleration.y() - accel_y ) /
+                boost::qvm::A11( zeabus::robot::mat_inertia ) *
+                ( -1.0 * vec_vision_velocity_1.y() );
+        auto new_k_z = arr_viscosity_k[ 2 ] - learning_rate_k * 
+                ( vec_vision_acceleration.z() - accel_z ) /
+                boost::qvm::A22( zeabus::robot::mat_inertia ) *
+                ( -1.0 * vec_vision_velocity_1.y() );
+        auto new_c_x = arr_viscosity_c[ 0 ];
+        auto new_c_y = arr_viscosity_c[ 1 ];
+        auto new_c_z = arr_viscosity_c[ 2 ];
+#endif // end confition calculate
 
 #ifndef _TUNE_VISION_OBSERVER_EQUATION_
         auto new_observer_force_x = boost::qvm::A00( mat_force_observer ) -learning_rate_observer *
@@ -172,9 +190,11 @@ void config_parameter_on_vision()
         printf( "k_constant :%10.2f%10.2f%10.2f   to%10.2f%10.2f%10.2f\n" , 
                 arr_viscosity_k[ 0 ], arr_viscosity_k[ 1 ], arr_viscosity_k[ 2 ],
                 new_k_x , new_k_y , new_k_z );
+#ifdef _USE_VISCOSITY_EXPONENTIAL_
         printf( "c_constant :%10.2f%10.2f%10.2f   to%10.2f%10.2f%10.2f\n" , 
                 arr_viscosity_c[ 0 ], arr_viscosity_c[ 1 ], arr_viscosity_c[ 2 ],
                 new_c_x , new_c_y , new_c_z );
+#endif // _USE_VISCOSITY_EXPONENTIAL_
 #ifndef _TUNE_VISION_OBSERVER_EQUATION_
         printf( "f_constant :%10.2f%10.2f%10.2f   to%10.2f%10.2f%10.2f\n\n" ,
                 boost::qvm::A00( mat_force_observer ) , 
@@ -198,9 +218,7 @@ void config_parameter_on_vision()
         }
         if( cost_x < minimum_cost_value || cost_x > maximum_cost_value )
         {
-//            std::cout   << zeabus::escape_code::bold_red << "PARAM OBSERVER "
-//                        << zeabus::escape_code::normal_white 
-//                        << ": Abort with x over limit of cost value\n"; 
+            ;
         }
         else
         {
@@ -211,9 +229,7 @@ void config_parameter_on_vision()
 
         if( cost_y < minimum_cost_value || cost_y > maximum_cost_value )
         {
-//            std::cout   << zeabus::escape_code::bold_red << "PARAM OBSERVER "
-//                        << zeabus::escape_code::normal_white 
-//                        << ": Abort with y over limit of cost value\n"; 
+            ;
         }
         else
         {
@@ -224,9 +240,7 @@ void config_parameter_on_vision()
 
         if( cost_z < minimum_cost_value || cost_z > maximum_cost_value )
         {
-//            std::cout   << zeabus::escape_code::bold_red << "PARAM OBSERVER "
-//                        << zeabus::escape_code::normal_white 
-//                        << ": Abort with z over limit of cost value\n"; 
+            ;
         }
         else
         {
@@ -299,7 +313,11 @@ void active_parameter()
 
 inline double viscosity( const double k , const double c , const double velocity )
 {
+#ifdef _USE_VISCOSITY_EXPONENTIAL_
     double answer = k * ( 1 - exp( -1.0 * c * fabs( velocity ) ) );
     if( velocity > 0 ) answer *= -1;
     return answer;
+#else
+    return -1.0 * k * velocity;
+#endif
 } // viscosity

@@ -51,6 +51,7 @@
 #include    <boost/qvm/vec_operations.hpp>
 #include    <boost/qvm/mat_operations.hpp>
 
+#include    <observer/observer_macro.hpp>
 #include    <observer/observer_parameter.hpp>
 #include    <observer/observer_localize.hpp>
 #include    <observer/observer_vision.hpp>

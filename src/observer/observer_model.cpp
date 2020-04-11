@@ -97,10 +97,14 @@ void calculate_viscosity()
 
 inline double viscosity( const unsigned int index )
 {
+#ifdef _USE_VISCOSITY_EXPONENTIAL_
     double answer = arr_viscosity_k[ index ] * 
             ( 1 - exp( -1.0 * arr_viscosity_c[index] * fabs( arr_robot_velocity[ index ] ) ) );
     if( arr_robot_velocity[ index ] > 0 ) answer *= -1;
     return answer;
+#else
+    return -1.0 * arr_viscosity_k[ index ] * arr_robot_velocity[ index ];
+#endif
 }
 
 void report_model()
