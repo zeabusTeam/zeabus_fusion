@@ -31,17 +31,17 @@ boost::qvm::mat< double , 6 , 1 > mat_force_observer = { 0 , 0 , 0 , 0 , 0 , 0 }
 #ifndef _TUNE_VISION_OBSERVER_EQUATION_
 const double learning_rate_observer = 0.1;
 #else
-const double learning_rate_observer = 0.01;
+const double learning_rate_observer = 0.05;
 #endif
-const double learning_rate_k = 0.001;
-const double learning_rate_c = 0.001;
+const double learning_rate_k = 0.01;
+const double learning_rate_c = 0.01;
 const double minimum_cost_value = 0.5;
 const double maximum_cost_value = 500;
 
 const std::string package_name = "zeabus_localize";
 const std::string sub_directory = "parameter/observer";
 const std::string file_name = "default.csv";
-const std::string file_name_dump = "end_02.csv";
+const std::string file_name_dump = "start_02.csv";
 const std::string file_name_load = "start_02.csv";
 
 void load_parameter()
@@ -190,6 +190,12 @@ void config_parameter_on_vision()
                 new_observer_force_x , new_observer_force_y , new_observer_force_z );
 #endif // _TUNE_VISION_OBSERVER_EQUATION_
 #endif // _PRINT_TUNE_VISION_
+        if( std::isnan( cost_x ) || std::isnan( cost_y ) || std::isnan( cost_z ) )
+        {
+            std::cout   << zeabus::escape_code::bold_yellow << "WARNING "
+                        << zeabus::escape_code::normal_white 
+                        << "PARAMETER OBSERVER : Can't edit parameter because NaN(Not a Number)\n";
+        }
         if( cost_x < minimum_cost_value || cost_x > maximum_cost_value )
         {
 //            std::cout   << zeabus::escape_code::bold_red << "PARAM OBSERVER "
