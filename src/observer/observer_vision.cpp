@@ -49,6 +49,11 @@ void active_vision()
             std::cout   << "CONFIG INREGRAL ON VISION =======================================\n";
             b_config_integral_vision = true;
         }
+        else
+        {
+            observer_data.pose.pose.position.x = (vec_observer_data.cend()-1)->pose.pose.position.x;
+            observer_data.pose.pose.position.y = (vec_observer_data.cend()-1)->pose.pose.position.y;
+        }
         break;
     case 1 : // can update position in integral vision part
         if( ! reupdate_position( vision_data ) )

@@ -104,7 +104,7 @@ int main( int argv, char** argc )
     std::string tf_error_string;
 
     reset_integral();
-
+    setup_reupdate();
     load_parameter();
 #ifdef _AVERAGE_THRUSTER_FORCE_
     mat_save_thruster *= 0;

@@ -46,6 +46,7 @@ bool reupdate_calculate( const nav_msgs::Odometry& vision_data , const tf::Vecto
                     ( message_point.observer_point.z - message_point.vision_point.z );
             publisher_point.publish( message_point );
             // end part publish data for echo
+            break;
         }
     }
 #endif // _PUBLISH_COMPARE_POINT_
@@ -55,7 +56,7 @@ bool reupdate_calculate( const nav_msgs::Odometry& vision_data , const tf::Vecto
     double position[ 2 ] = { vision_data.pose.pose.position.x ,
             vision_data.pose.pose.position.y };
     auto cit = vec_model_data.cbegin(); // constant iteration
-    auto oit = vec_observer_data.begin();  // observer iteration
+    std::vector< nav_msgs::Odometry>::iterator oit = vec_observer_data.begin(); 
     auto stamp = vision_data.header.stamp;
     while( cit != vec_model_data.cend() )
     {
@@ -69,14 +70,15 @@ bool reupdate_calculate( const nav_msgs::Odometry& vision_data , const tf::Vecto
                             << "REUPDATED OBSERVER : observer<->model time did't match\n";
                 while( oit != vec_observer_data.end() )
                 {
-                    if( oit->header.stamp >= vision_data.header.stamp )
+                    if( oit->header.stamp >= cit->stamp )
                     {
                         break;
                     }
                     oit++;
                 }
-                throw;
             }
+            cit++;
+            oit++;
             oit->pose.pose.position.x = vision_data.pose.pose.position.x;
             oit->pose.pose.position.y = vision_data.pose.pose.position.y;
             break;    
@@ -89,16 +91,17 @@ bool reupdate_calculate( const nav_msgs::Odometry& vision_data , const tf::Vecto
         // before calculate must ensure cit->stamp == oit->header.stamp
         if( cit->stamp != oit->header.stamp )
         {
-            oit++;
             if( oit == vec_observer_data.end() )
             {
                 std::cout   << zeabus::escape_code::bold_red << "FATAL " 
                             << zeabus::escape_code::normal_white 
                             << "REUPDATED OBSERVER : Don't have time to match observer<->model\n";
+                have_reupdate = false;
                 break;
             }
             else
             {
+                oit++;
                 continue;
             }
         }
@@ -123,7 +126,6 @@ bool reupdate_calculate( const nav_msgs::Odometry& vision_data , const tf::Vecto
         velocity[ 0 ] += acceleration[ 0 ] * diff_time;
         velocity[ 1 ] += acceleration[ 1 ] * diff_time;
         velocity[ 2 ] += acceleration[ 2 ] * diff_time;
-        velocity[ 2 ] = 0;
         // convert data from base line to odom
         zeabus::math::inv_rotation( cit->quaternion , velocity );
         zeabus::math::inv_rotation( cit->quaternion , acceleration );
@@ -131,18 +133,29 @@ bool reupdate_calculate( const nav_msgs::Odometry& vision_data , const tf::Vecto
                 acceleration[ 0 ] * pow( diff_time , 2 ) / 2.0;
         position[ 1 ] += velocity[ 1 ] * diff_time - 
                 acceleration[ 1 ] * pow( diff_time , 2 ) / 2.0;
+//        printf( "From %8.3f,%8.3f to %8.3f,%8.3f\n" , oit->pose.pose.position.x ,
+//                oit->pose.pose.position.y , position[ 0 ] , position[ 1 ] );
         oit->pose.pose.position.x = position[0];
         oit->pose.pose.position.y = position[1];
+/*        printf( "Update last data %8.3f,%8.3f\n" , 
+                oit->pose.pose.position.x,
+                oit->pose.pose.position.y );*/
         stamp = cit->stamp;
         cit++;
         oit++; 
+/*        if( oit == vec_observer_data.end() )
+        {
+            printf( "Update last data %8.3f,%8.3f\n" , 
+                    ( vec_observer_data.end() - 1)->pose.pose.position.x,
+                    ( vec_observer_data.end() - 1)->pose.pose.position.y );
+        }*/
     }
 
     // copy velocity in x y odom frame
     std::memcpy( (void*) arr_odom_linear_velocity.c_array() ,
             (void*) velocity , sizeof( double ) * 2 );
     // Main observer will rotate data to base link before calculate model in file observer.cpp
-
+    
 end_function_reupdate_velocity:
     return have_reupdate;
 } // function reupdate_calculate
@@ -206,7 +219,8 @@ bool reupdate_position( const nav_msgs::Odometry& vision_data )
             // Delete will help you to filter time search
             // But this vector have time only 2 second? I desire that.
             // Don't worry time to access data
-            vec_observer_data.erase( vec_observer_data.begin() , it );
+//            vec_observer_data.erase( vec_observer_data.begin() , it );
+            // Now we want to collect all so we didn't to erase data anymore
             break; // after update mean you run overdata
         } // case (it--)->header.stamp < vision_data.header.stamp < it->header.stamp
         else

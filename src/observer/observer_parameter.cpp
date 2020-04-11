@@ -14,7 +14,7 @@
 #define _TUNE_VISION_
 #define _TUNE_VISION_OBSERVER_EQUATION_
 //#define _TUNE_LOCALIZE_
-//#define _PRINT_TUNE_VISION_
+#define _PRINT_TUNE_VISION_
 
 // MACRO CONDITION
 #ifdef _TUNE_ALL_
@@ -41,8 +41,8 @@ const double maximum_cost_value = 500;
 const std::string package_name = "zeabus_localize";
 const std::string sub_directory = "parameter/observer";
 const std::string file_name = "default.csv";
-const std::string file_name_dump = "end_01.csv";
-const std::string file_name_load = "start_01.csv";
+const std::string file_name_dump = "end_02.csv";
+const std::string file_name_load = "start_02.csv";
 
 void load_parameter()
 {
@@ -229,7 +229,20 @@ void config_parameter_on_vision()
             boost::qvm::A20( mat_force_observer ) = new_observer_force_z;
         }
         // not use 1 because data know acceleration and data vision data have velocity in unit 2
-        (void*) reupdate_calculate( vision_data , vec_vision_velocity_2 );
+        if( ! reupdate_calculate( vision_data , vec_vision_velocity_2 ) )
+        {
+            std::cout   << "CONFIG INREGRAL ON VISION =======================================\n";
+            b_config_integral_vision = true;
+        }
+        else
+        {
+/*            printf( "ORIGINAL %8.3f,%8.3f\n" , observer_data.pose.pose.position.x,
+                    observer_data.pose.pose.position.y );
+            printf( "NEW      %8.3f,%8.3f\n" , (vec_observer_data.cend()-1)->pose.pose.position.x,
+                    (vec_observer_data.cend()-1)->pose.pose.position.y );*/
+            observer_data.pose.pose.position.x = (vec_observer_data.cend()-1)->pose.pose.position.x;
+            observer_data.pose.pose.position.y = (vec_observer_data.cend()-1)->pose.pose.position.y;
+        }
     } // condition hit data in buffer
     else
     {
@@ -263,7 +276,18 @@ void active_parameter()
         config_parameter_on_vision(); 
         b_config_model_vision = false;
     }
-#endif    
+#else
+    if( ! reupdate_calculate( vision_data , vec_vision_velocity_2 ) )
+    {
+        std::cout   << "CONFIG INREGRAL ON VISION =======================================\n";
+        b_config_integral_vision = true;
+    }
+    else
+    {
+        observer_data.pose.pose.position.x = vec_observer_data.crend()->pose.pose.position.x;
+        observer_data.pose.pose.position.y = vec_observer_data.crend()->pose.pose.position.y;
+    }
+#endif 
     return;
 } // active_parameter
 
