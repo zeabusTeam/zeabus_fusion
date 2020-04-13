@@ -3,17 +3,21 @@
 // CREATE ON	: 2020, ????? ?? (UTC+0)
 // MAINTAINER	: K.Supasan
 
-// MACRO DETAIL
+// ==================> MACRO DETAIL
 
-// README
+// ==================> README
 
-// REFERENCE
+// ==================> REFERENCE
 
-// MACRO SET
+// ==================> MACRO SET
 //#define _USE_VISCOSITY_LINEAR_
 #define _USE_VISCOSITY_EXPONENTIAL_
 
-// MACRO CONDITION
+//#define _RECEIVE_VISION_DATA_
+
+//#define _PRINT_PROCESS_CALCULATE_MODEL_
+
+// ==================> MACRO CONDITION
 // Part Manage about how to calculate viscosity
 #ifdef _USE_VISCOSITY_LINEAR_
     #undef _USE_VISCOSITY_EXPONENTIAL_

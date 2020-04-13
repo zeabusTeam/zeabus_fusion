@@ -25,6 +25,9 @@ boost::array< double , 3 > arr_odom_linear_acceleration;
 
 void reset_integral()
 {
+    std::cout   << zeabus::escape_code::normal_margenta << "INFORMATION : " 
+                << zeabus::escape_code::normal_white 
+                << "INTEGRAL OBSERVER : reset integral information\n";
     observer_status  = false;
     mat_acceleration *= 0;
     mat_velocity *= 0;

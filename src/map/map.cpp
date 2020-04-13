@@ -60,7 +60,7 @@ int main( int argv , char** argc )
     unsigned int list_seq[ 2 ] = { 0 , 0 };
     nav_msgs::Odometry message_odometry;
     ros::Publisher publish_odometry = nh.advertise< nav_msgs::Odometry >( 
-            "/localize/vision" , 1 );
+            "/localize/zeabus_vision" , 1 );
     message_odometry.header.frame_id = "odom";
     message_odometry.child_frame_id = "base_link_vision";
     

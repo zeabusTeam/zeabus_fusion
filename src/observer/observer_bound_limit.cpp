@@ -49,6 +49,7 @@ void active_bound_limit()
         {
             observer_status = false;
             publish( "BOUND LIMIT : Stop Observer" );
+            reset_integral();
         }
         else
         {

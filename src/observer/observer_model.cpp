@@ -10,7 +10,6 @@
 // REFERENCE
 
 // MACRO SET
-//#define _PRINT_MODEL_
 
 // MACRO CONDITION
 
@@ -69,9 +68,9 @@ void active_model( const ros::Time& current_time )
 
     mat_acceleration = zeabus::robot::mat_inertia_inverse * mat_acceleration;
 
-#ifdef _PRINT_MODEL_
+#ifdef _PRINT_PROCESS_CALCULATE_MODEL_
     report_model();
-#endif // _PRINT_MODEL_
+#endif // _PRINT_PROCESS_CALCULATE_MODEL_
 
     vec_model_data.push_back( DataObserverModel( mat_acceleration , 
             mat_force_gravity,

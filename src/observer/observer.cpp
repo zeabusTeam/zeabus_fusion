@@ -144,6 +144,7 @@ int main( int argv, char** argc )
         lock_message_current_state.unlock();
 
         // Download message current vision 
+#ifdef _RECEIVE_VISION_DATA_
         lock_message_current_vision.lock();
         if( vision_stamp != message_current_vision.header.stamp )
         {
@@ -151,6 +152,7 @@ int main( int argv, char** argc )
             vision_data = message_current_vision;
         }
         lock_message_current_vision.unlock();
+#endif // _RECEIVE_VISION_DATA_
 
 response_vision_data:
         mode = vision_stamp_handle( vision_stamp );
@@ -179,6 +181,7 @@ response_localize_data:
         {
             case 2 :
                 reset_localize();
+                reset_integral();
                 reset_buffer_model();
                 reset_buffer_observer();
             case 1 :
