@@ -90,6 +90,7 @@ void active_integral( const double& observer_diff,
 
 //=========> STEP : calculate position z
     // Now we have current velocity we have to calculate distance
+#ifndef _CLOSE_PART_UPDATED_DEPTH_
     if( b_config_integral_z_linear )
     {
         b_config_integral_z_linear = false;
@@ -100,11 +101,14 @@ void active_integral( const double& observer_diff,
     }
     else
     {
+#endif
         observer_data.pose.pose.position.z += 
                 arr_odom_linear_velocity[2] * observer_diff - 
                 arr_odom_linear_acceleration[2] * pow( observer_diff , 2 ) / 2;
+#ifndef _CLOSE_PART_UPDATED_DEPTH_
         active_bound_limit_depth();
     }
+#endif
 
 //=========> STEP : calculate orientation
     // Differential is on time because current quaternion will fix already use localize or estimate 

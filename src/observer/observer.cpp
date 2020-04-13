@@ -51,7 +51,7 @@ int main( int argv, char** argc )
     std::string topic_current_vision;
     ph.param< std::string >( "topic_current_vision" , 
             topic_current_vision,
-            "/localize/vision" );
+            "/localize/zeabus_vision" );
 
     std::string frame_child_observer = "base_link_observer";
     std::string frame_parent = "odom";

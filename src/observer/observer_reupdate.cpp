@@ -11,7 +11,7 @@
 //  ref01 : http://docs.ros.org/diamondback/api/tf/html/c++/classtf_1_1Transformer.html
 
 // MACRO SET
-// #define _PRINT_REUPDATE_POSITION_
+ #define _PRINT_REUPDATE_POSITION_
 // #define _AVERAGE_THRUSTER_FORCE_
 #define _PUBLISH_COMPARE_POINT_
 
