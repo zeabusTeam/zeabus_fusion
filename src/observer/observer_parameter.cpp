@@ -41,7 +41,7 @@ const double maximum_cost_value = 500;
 const std::string package_name = "zeabus_localize";
 const std::string sub_directory = "parameter/observer";
 const std::string file_name = "default.csv";
-const std::string file_name_dump = "start_02.csv";
+const std::string file_name_dump = "end_02.csv";
 const std::string file_name_load = "start_02.csv";
 
 void load_parameter()
